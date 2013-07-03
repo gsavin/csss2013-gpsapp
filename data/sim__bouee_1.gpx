@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="GraphStream">
+  <metadata>
+    <name><![CDATA[bouee#1]]></name>
+    <desc><![CDATA[]]></desc>
+  </metadata>
+  <trk>
+    <name><![CDATA[bouee#1]]></name>
+    <desc><![CDATA[]]></desc>
+    <type><![CDATA[]]></type>
+    <trkseg>
+      <trkpt lat="90.064137" lon="18.237358">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:21.733+0100</time>
+      </trkpt>
+      <trkpt lat="91.339326" lon="18.722195">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:22.733+0100</time>
+      </trkpt>
+      <trkpt lat="91.135630" lon="18.851093">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:23.733+0100</time>
+      </trkpt>
+      <trkpt lat="89.428878" lon="16.883919">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:24.733+0100</time>
+      </trkpt>
+      <trkpt lat="88.117340" lon="15.785728">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:25.733+0100</time>
+      </trkpt>
+      <trkpt lat="86.570011" lon="15.014422">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:26.733+0100</time>
+      </trkpt>
+      <trkpt lat="88.206800" lon="16.671242">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:27.733+0100</time>
+      </trkpt>
+      <trkpt lat="89.319971" lon="18.279350">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:28.733+0100</time>
+      </trkpt>
+      <trkpt lat="87.383440" lon="19.822395">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:29.733+0100</time>
+      </trkpt>
+      <trkpt lat="88.271215" lon="18.064385">
+        <ele>0</ele>
+        <time>2013-06-02T16:52:30.733+0100</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
