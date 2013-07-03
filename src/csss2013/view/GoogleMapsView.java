@@ -1,10 +1,4 @@
-/*
- * This file is a part of a project under the terms of the GPL3.
- * You can find these terms in the COPYING file distributed with the project.
- * 
- *  Copyright 2013 Guilhelm Savin
- */
-package csss2013;
+package csss2013.view;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -18,12 +12,24 @@ import java.net.URLEncoder;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import org.graphstream.graph.Node;
 
-public class GoogleMapsView extends JLabel {
-	private static final long serialVersionUID = 3204960321557116362L;
+import csss2013.App;
+import csss2013.Trace;
+import csss2013.TraceView;
+
+public class GoogleMapsView implements TraceView {
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see csss2013.TraceView#build(csss2013.App)
+	 */
+	public JComponent build(App app) {
+		return new Widget(app);
+	}
 
 	public static BufferedImage get(String targetURL, String urlParameters) {
 		URL url;
@@ -124,41 +130,46 @@ public class GoogleMapsView extends JLabel {
 		}
 	}
 
-	public GoogleMapsView(Trace... traces) {
-		this(512, 512, traces);
-	}
+	public class Widget extends JLabel {
+		private static final long serialVersionUID = 3204960321557116362L;
 
-	public GoogleMapsView(int width, int height, Trace... traces) {
-		String url = "https://maps.googleapis.com/maps/api/staticmap";
-		StringBuilder buffer = new StringBuilder();
-
-		buffer.append("size=");
-		buffer.append(width).append("x").append(height);
-		buffer.append("&sensor=false&maptype=hybrid");
-
-		for (Trace t : traces)
-			buffer.append("&").append(getGoogleMapsPath(t));
-
-		BufferedImage img;
-
-		if (url.length() + buffer.length() < 2048)
-			img = get(url, buffer.toString());
-		else {
-			
-			// POST is sadly not support by Google Maps :(
-			// img = post(url, buffer.toString());
-			
-			img = null;
+		public Widget(App app) {
+			this(512, 512, app);
 		}
 
-		if (img != null) {
-			ImageIcon icon = new ImageIcon(img);
-			setIcon(icon);
-		} else {
-			setText("Unavailable");
+		public Widget(int width, int height, App app) {
+			String url = "https://maps.googleapis.com/maps/api/staticmap";
+			StringBuilder buffer = new StringBuilder();
+
+			buffer.append("size=");
+			buffer.append(width).append("x").append(height);
+			buffer.append("&sensor=false&maptype=hybrid");
+
+			for (int idx = 0; idx < app.getTraceCount(); idx++)
+				buffer.append("&").append(getGoogleMapsPath(app.getTrace(idx)));
+
+			BufferedImage img;
+
+			if (url.length() + buffer.length() < 2048)
+				img = get(url, buffer.toString());
+			else {
+
+				// POST is sadly not support by Google Maps :(
+				// img = post(url, buffer.toString());
+
+				img = null;
+				App.error("Too many points for Google Maps ...");
+			}
+
+			if (img != null) {
+				ImageIcon icon = new ImageIcon(img);
+				setIcon(icon);
+			} else {
+				setText("Unavailable");
+			}
+
+			setVerticalAlignment(JLabel.CENTER);
+			setHorizontalAlignment(JLabel.CENTER);
 		}
-		
-		setVerticalAlignment(JLabel.CENTER);
-		setHorizontalAlignment(JLabel.CENTER);
 	}
 }

@@ -4,7 +4,7 @@
  * 
  *  Copyright 2013 Guilhelm Savin
  */
-package csss2013;
+package csss2013.process;
 
 import java.text.ParseException;
 import java.util.Calendar;
@@ -12,11 +12,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.stream.Timeline;
 import org.graphstream.util.time.ISODateIO;
 
-public class Reload extends AdjacencyListGraph {
+import csss2013.App;
+import csss2013.Process;
+import csss2013.Trace;
+
+public class Reload implements Process {
+	public static final String TIMELINE_DATA_NAME = "process.reload.file";
 
 	protected class Entry implements Comparable<Entry> {
 		long time;
@@ -55,19 +63,47 @@ public class Reload extends AdjacencyListGraph {
 
 	double acceleration = 30;
 	String stylesheet;
-	HashMap<Trace, EntryStack> stacks;
-	long tick = 50;
+	final HashMap<Trace, EntryStack> stacks;
 
-	public Reload(Trace... traces) {
-		super("reloader");
+	/**
+	 * In meters.
+	 */
+	double minDistance = 1;
 
+	public Reload() {
 		stacks = new HashMap<Trace, EntryStack>();
 		stylesheet = "node {size:15px;} node.anchor {size:1px;}";
+	}
 
-		if (traces != null) {
-			for (Trace t : traces)
-				load(t);
-		}
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see csss2013.Process#getPriority()
+	 */
+	public int getPriority() {
+		return 90;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see csss2013.Process#process(csss2013.App)
+	 */
+	public synchronized void process(App app) {
+		Graph g = new AdjacencyListGraph("reload");
+		Timeline timeline = new Timeline();
+
+		stacks.clear();
+
+		for (int idx = 0; idx < app.getTraceCount(); idx++)
+			load(app.getTrace(idx));
+
+		timeline.begin(g);
+		reload(g);
+		timeline.end();
+		timeline.seekStart();
+
+		app.setData(TIMELINE_DATA_NAME, timeline);
 	}
 
 	protected void load(Trace trace) {
@@ -83,14 +119,14 @@ public class Reload extends AdjacencyListGraph {
 			e.printStackTrace();
 		}
 
-		stylesheet += String.format(" node#%s {fill-color:%s;}", trace.getId(),
-				trace.getColor());
+		stylesheet += String.format(" node#%s {fill-color:%s;%s}",
+				trace.getId(), trace.getColor(), trace.getCustomStyle());
 
 		for (int i = 0; i < trace.getNodeCount(); i++) {
 			Node n = trace.getNode(i);
 			String time = n.getAttribute("time");
 			Calendar c = dateScanner.parse(time);
-			
+
 			if (c == null)
 				c = dateScannerNoMS.parse(time);
 
@@ -120,24 +156,40 @@ public class Reload extends AdjacencyListGraph {
 		return start;
 	}
 
+	/*
+	 * public long getTick() { reset();
+	 * 
+	 * long current = getNextDate(); long next; long tick = Long.MAX_VALUE;
+	 * 
+	 * while (hasRemaining()) { next = getNextDate(); tick = Math.min(tick, next
+	 * - current); current = next; }
+	 * 
+	 * return Math.max(1, tick); }
+	 */
+
+	protected EntryStack getNextStack() {
+		EntryStack winner = null;
+
+		for (EntryStack stack : stacks.values()) {
+			if (stack.hasRemaining()
+					&& (winner == null || stack.current().time < winner
+							.current().time))
+				winner = stack;
+		}
+
+		return winner;
+	}
+
 	public boolean hasRemaining() {
 		for (EntryStack stack : stacks.values())
-			if (stack.position < stack.size())
+			if (stack.hasRemaining())
 				return true;
 
 		return false;
 	}
 
-	public void play() {
+	protected void reload(Graph g) {
 		reset();
-		clear();
-
-		long date = getStartDate();
-		long step = (long) (tick * acceleration);
-
-		addAttribute("ui.stylesheet", stylesheet);
-		addAttribute("ui.quality");
-		addAttribute("ui.antialias");
 
 		double minX, minY, maxX, maxY;
 		minX = minY = Double.MAX_VALUE;
@@ -153,37 +205,50 @@ public class Reload extends AdjacencyListGraph {
 				maxY = Math.max(maxY, xyz[1]);
 			}
 
-		Node anchorMin = addNode("anchor-min");
+		g.addAttribute("ui.stylesheet", stylesheet);
+		g.addAttribute("ui.quality");
+		g.addAttribute("ui.antialias");
+		g.addAttribute("anchor-min", new double[] { minX, minY, 0 });
+		g.addAttribute("anchor-max", new double[] { maxX, maxY, 0 });
+		// addAttribute("tick", theTick);
+
+		Node anchorMin = g.addNode("anchor-min");
 		anchorMin.addAttribute("xyz", new double[] { minX, minY, 0 });
 		anchorMin.addAttribute("ui.class", "anchor");
 
-		Node anchorMax = addNode("anchor-max");
+		Node anchorMax = g.addNode("anchor-max");
 		anchorMax.addAttribute("xyz", new double[] { maxX, maxY, 0 });
 		anchorMax.addAttribute("ui.class", "anchor");
 
 		while (hasRemaining()) {
+			EntryStack current = getNextStack();
+			long date = current.current().time;
+
+			g.setAttribute("time", date);
+			g.stepBegins((double) date);
+
 			for (EntryStack stack : stacks.values()) {
 				if (!stack.hasRemaining())
 					continue;
 
-				while (stack.position < stack.size() - 1
-						&& stack.get(stack.position + 1).time <= date)
-					stack.position++;
+				//while (stack.position < stack.size() - 1
+				//		&& stack.get(stack.position + 1).time <= date)
+				//	stack.position++;
 
 				if (stack.position == stack.size() - 1
 						&& stack.current().time < date) {
-					removeNode(stack.trace.getId());
+					g.removeNode(stack.trace.getId());
 					stack.position++;
 					continue;
 				}
 
-				Node traceNode = getNode(stack.trace.getId());
+				Node traceNode = g.getNode(stack.trace.getId());
 
 				if (traceNode == null) {
 					double[] initXYZ = stack.get(0).traceNode
 							.getAttribute("xyz");
 
-					traceNode = addNode(stack.trace.getId());
+					traceNode = g.addNode(stack.trace.getId());
 					traceNode.addAttribute("xyz", new double[] { initXYZ[0],
 							initXYZ[1] });
 				}
@@ -191,6 +256,8 @@ public class Reload extends AdjacencyListGraph {
 				double[] xyz = traceNode.getAttribute("xyz");
 				double[] xyz1 = stack.current().traceNode.getAttribute("xyz");
 
+				System.out.printf("> (%f;%f)\n", xyz[0], xyz[1]);
+				
 				if (stack.position == stack.size() - 1) {
 					xyz[0] = xyz1[0];
 					xyz[1] = xyz1[1];
@@ -203,15 +270,44 @@ public class Reload extends AdjacencyListGraph {
 					xyz[1] = xyz1[1] + ratio * (xyz2[1] - xyz1[1]);
 				}
 
+				System.out.printf(">> (%f;%f)\n", xyz[0], xyz[1]);
+				
 				traceNode.setAttribute("xyz", xyz);
 			}
 
-			date += step;
-
-			try {
-				Thread.sleep(tick);
-			} catch (InterruptedException e) {
-			}
+			checkLinks(g);
+			current.position++;
 		}
+	}
+
+	protected void checkLinks(Graph g) {
+		for (int i = 0; i < g.getNodeCount() - 1; i++)
+			for (int j = i + 1; j < g.getNodeCount(); j++) {
+				Node n1 = g.getNode(i);
+				Node n2 = g.getNode(j);
+				Edge e = n1.getEdgeBetween(n2);
+
+				double d = distance(n1, n2);
+
+				if (e == null) {
+					if (d <= minDistance)
+						g.addEdge(n1.getId() + "__" + n2.getId(), n1, n2);
+				} else if (d > minDistance)
+					g.removeEdge(e);
+			}
+	}
+
+	protected double distance(Node n1, Node n2) {
+		double R = 6371000;
+		double lat1 = n1.getNumber("lat"), lat2 = n2.getNumber("lat"), lon1 = n1
+				.getNumber("lon"), lon2 = n2.getNumber("lon");
+		double dLat = (lat2 - lat1) / 360.0 * (2 * Math.PI);
+		double dLon = (lon2 - lon1) / 360.0 * (2 * Math.PI);
+
+		double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2)
+				* Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
+		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+		return R * c;
 	}
 }

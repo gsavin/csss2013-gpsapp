@@ -43,37 +43,6 @@ public class Trace extends AdjacencyListGraph {
 		return t;
 	}
 
-	public static void normalize(Trace... traces) {
-		double x = 0, y = 0, n = 0;
-
-		for (int i = 0; i < traces.length; i++) {
-			Trace t = traces[i];
-			n += t.getNodeCount();
-
-			for (int j = 0; j < t.getNodeCount(); j++) {
-				double[] xyz = t.getNode(j).getAttribute("xyz");
-				x += xyz[0];
-				y += xyz[1];
-			}
-		}
-
-		x /= n;
-		y /= n;
-
-		for (int i = 0; i < traces.length; i++) {
-			Trace t = traces[i];
-
-			for (int j = 0; j < t.getNodeCount(); j++) {
-				double[] xyz = t.getNode(j).getAttribute("xyz");
-
-				xyz[0] -= x;
-				xyz[1] -= y;
-
-				t.getNode(j).setAttribute("xyz", xyz);
-			}
-		}
-	}
-
 	protected String color = "#222222";
 	protected String customStyle = "";
 
