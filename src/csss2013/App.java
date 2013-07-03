@@ -1,3 +1,9 @@
+/*
+ * This file is a part of a project under the terms of the GPL3.
+ * You can find these terms in the COPYING file distributed with the project.
+ * 
+ *  Copyright 2013 Guilhelm Savin
+ */
 package csss2013;
 
 import java.awt.Dimension;
