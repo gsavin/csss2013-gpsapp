@@ -14,8 +14,10 @@ import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Properties;
 
 import javax.swing.AbstractAction;
 import javax.swing.AbstractCellEditor;
@@ -54,6 +56,8 @@ public class SettingsWizard extends JPanel {
 	App app;
 	HashSet<String> viewTypes;
 	HashSet<String> processTypes;
+	Properties properties;
+	JPanel checkboxesView, checkboxesProcess;
 
 	public SettingsWizard(App app) {
 		this.app = app;
@@ -62,6 +66,7 @@ public class SettingsWizard extends JPanel {
 		this.viewTypes = new HashSet<String>();
 		this.processTypes = new HashSet<String>();
 		this.palette = new Palette();
+		this.properties = null;
 
 		JTable entries = new JTable(model);
 
@@ -75,37 +80,13 @@ public class SettingsWizard extends JPanel {
 
 		JScrollPane tableContainer = new JScrollPane(entries);
 
-		JPanel checkboxesView = new JPanel();
-		checkboxesView.setLayout(new FlowLayout(FlowLayout.LEFT));
-		checkboxesView.add(new JLabel("Select views:"));
-
+		checkboxesView = new JPanel();
 		viewTypes.addAll(App.getDefaultViewName());
+		loadViewsCheckboxes();
 
-		for (String name : App.getRegisteredViewName()) {
-			ViewTypeAction a = new ViewTypeAction(name);
-			JCheckBox box = new JCheckBox(a);
-
-			checkboxesView.add(box);
-
-			if (viewTypes.contains(name))
-				box.setSelected(true);
-		}
-
-		JPanel checkboxesProcess = new JPanel();
-		checkboxesProcess.setLayout(new FlowLayout(FlowLayout.LEFT));
-		checkboxesProcess.add(new JLabel("Select process:"));
-
+		checkboxesProcess = new JPanel();
 		processTypes.addAll(App.getDefaultProcessName());
-
-		for (String name : App.getRegisteredProcessName()) {
-			ProcessTypeAction a = new ProcessTypeAction(name);
-			JCheckBox box = new JCheckBox(a);
-
-			checkboxesProcess.add(box);
-
-			if (processTypes.contains(name))
-				box.setSelected(true);
-		}
+		loadProcessCheckboxes();
 
 		JPanel checkboxes = new JPanel();
 		checkboxes.setLayout(new GridLayout(2, 1));
@@ -138,6 +119,44 @@ public class SettingsWizard extends JPanel {
 		dialog.pack();
 	}
 
+	protected void loadViewsCheckboxes() {
+		checkboxesView.removeAll();
+		checkboxesView.revalidate();
+		checkboxesView.setLayout(new FlowLayout(FlowLayout.LEFT));
+		checkboxesView.add(new JLabel("Views:"));
+
+		for (String name : App.getRegisteredViewName()) {
+			ViewTypeAction a = new ViewTypeAction(name);
+			JCheckBox box = new JCheckBox(a);
+
+			checkboxesView.add(box);
+
+			if (viewTypes.contains(name))
+				box.setSelected(true);
+		}
+
+		dialog.pack();
+	}
+
+	protected void loadProcessCheckboxes() {
+		checkboxesProcess.removeAll();
+		checkboxesProcess.revalidate();
+		checkboxesProcess.setLayout(new FlowLayout(FlowLayout.LEFT));
+		checkboxesProcess.add(new JLabel("Process:"));
+
+		for (String name : App.getRegisteredProcessName()) {
+			ProcessTypeAction a = new ProcessTypeAction(name);
+			JCheckBox box = new JCheckBox(a);
+
+			checkboxesProcess.add(box);
+
+			if (processTypes.contains(name))
+				box.setSelected(true);
+		}
+
+		dialog.pack();
+	}
+
 	class AddTraceAction extends AbstractAction {
 		private static final long serialVersionUID = -5390199887054718055L;
 
@@ -163,7 +182,107 @@ public class SettingsWizard extends JPanel {
 		}
 
 		public void actionPerformed(ActionEvent arg0) {
-			App.error("Don't worry. This cool feature will come soon !");
+			File[] prop = selectFiles("XML Configuration", "xml", false);
+
+			if (prop == null)
+				return;
+
+			Properties settings = null;
+
+			try {
+				settings = App.loadProperties(prop[0].getPath());
+			} catch (FileNotFoundException e) {
+				App.error(e);
+				return;
+			}
+
+			String proc = settings.getProperty("settings.process");
+			processTypes.clear();
+
+			if (proc != null) {
+				String[] process = proc.split("\\s*,\\s*");
+
+				for (String p : process) {
+					String tryClass = settings.getProperty(String.format(
+							"settings.process.%s.class", p));
+
+					if (tryClass != null) {
+						try {
+							@SuppressWarnings("unchecked")
+							Class<? extends Process> pClass = (Class<? extends Process>) Class
+									.forName(tryClass);
+
+							App.registerProcess(p, pClass);
+						} catch (ClassNotFoundException e) {
+							App.error(e);
+						}
+					}
+
+					processTypes.add(p);
+				}
+			} else
+				processTypes.addAll(App.getDefaultProcessName());
+
+			loadProcessCheckboxes();
+
+			String vs = settings.getProperty("settings.views");
+			viewTypes.clear();
+
+			if (vs != null) {
+				String[] views = vs.split("\\s*,\\s*");
+
+				for (String v : views) {
+					String tryClass = settings.getProperty(String.format(
+							"settings.views.%s.class", v));
+
+					if (tryClass != null) {
+						try {
+							@SuppressWarnings("unchecked")
+							Class<? extends TraceView> pClass = (Class<? extends TraceView>) Class
+									.forName(tryClass);
+
+							App.registerView(v, pClass);
+						} catch (ClassNotFoundException e) {
+							App.error(e);
+						}
+					}
+
+					viewTypes.add(v);
+				}
+			} else
+				viewTypes.addAll(App.getDefaultViewName());
+
+			loadViewsCheckboxes();
+
+			String[] traces = settings.getProperty("settings.traces", "")
+					.split("\\s*,\\s*");
+
+			for (String trace : traces) {
+				String name = settings.getProperty(String.format(
+						"settings.%s.name", trace));
+				String data = settings.getProperty(String.format(
+						"settings.%s.data", trace));
+				String color = settings.getProperty(
+						String.format("settings.%s.color", trace),
+						palette.nextColor());
+				String style = settings.getProperty(
+						String.format("settings.%s.style", trace), "");
+
+				if (name == null)
+					name = trace;
+
+				if (data == null) {
+					App.error("No data for trace " + name);
+					continue;
+				}
+
+				File path = new File(data);
+				Color theColor = Color.decode(color);
+
+				model.addEntry(name, path, theColor, style);
+			}
+
+			properties = settings;
 		}
 	}
 
@@ -252,16 +371,30 @@ public class SettingsWizard extends JPanel {
 	}
 
 	protected static File[] selectGPXFiles() {
+		return selectFiles("GPX files", "gpx", true);
+	}
+
+	protected static File[] selectFiles(String desc, String ext,
+			boolean multiple) {
 		JFileChooser fileChooser = new JFileChooser(".");
-		FileNameExtensionFilter filter = new FileNameExtensionFilter(
-				"GPX traces", "gpx");
+		FileNameExtensionFilter filter = new FileNameExtensionFilter(desc, ext);
 
 		fileChooser.setFileFilter(filter);
-		fileChooser.setMultiSelectionEnabled(true);
-		fileChooser.showOpenDialog(null);
+		fileChooser.setMultiSelectionEnabled(multiple);
+		int r = fileChooser.showOpenDialog(null);
 
-		File[] files = fileChooser.getSelectedFiles();
-		return files;
+		if (r == JFileChooser.APPROVE_OPTION) {
+			File[] files;
+
+			if (multiple)
+				files = fileChooser.getSelectedFiles();
+			else
+				files = new File[] { fileChooser.getSelectedFile() };
+
+			return files;
+		}
+
+		return null;
 	}
 
 	class TraceFileModel extends AbstractTableModel {
@@ -279,7 +412,12 @@ public class SettingsWizard extends JPanel {
 
 			Color color = Color.decode(palette.nextColor());
 			String style = "";
-			Object[] entry = { defaultName, f, color, style };
+
+			addEntry(defaultName, f, color, style);
+		}
+
+		public void addEntry(String name, File f, Color color, String style) {
+			Object[] entry = { name, f, color, style };
 
 			data = Arrays.copyOf(data, data.length + 1);
 			data[data.length - 1] = entry;
@@ -323,6 +461,9 @@ public class SettingsWizard extends JPanel {
 			Settings settings = new Settings();
 			settings.setViews(viewTypes);
 			settings.setProcess(processTypes);
+
+			if (properties != null)
+				settings.setProperties(properties);
 
 			for (int i = 0; i < data.length; i++) {
 				String name = (String) data[i][0];

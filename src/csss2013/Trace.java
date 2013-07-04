@@ -19,12 +19,15 @@ public class Trace extends AdjacencyListGraph {
 	public static final boolean HIGH_QUALITY_RENDERING = true;
 
 	public static Trace load(String name, File file) throws IOException {
-		FileInputStream in = new FileInputStream(file);
+		if (file.exists()) {
+			FileInputStream in = new FileInputStream(file);
 
-		Trace t = load(name, in);
-		in.close();
+			Trace t = load(name, in);
+			in.close();
 
-		return t;
+			return t;
+		} else
+			return load(name, file.getPath());
 	}
 
 	public static Trace load(String name, InputStream data) throws IOException {
@@ -39,6 +42,26 @@ public class Trace extends AdjacencyListGraph {
 		gpx.addSink(t);
 		gpx.readAll(data);
 		gpx.removeSink(t);
+
+		return t;
+	}
+
+	public static Trace load(String name, String resource) throws IOException {
+		File f = new File(resource);
+
+		if (f.exists())
+			return load(name, f);
+
+		InputStream in = ClassLoader.getSystemResourceAsStream(resource);
+
+		if (in == null)
+			in = Trace.class.getResourceAsStream(resource);
+
+		if (in == null)
+			return null;
+
+		Trace t = load(name, in);
+		in.close();
 
 		return t;
 	}

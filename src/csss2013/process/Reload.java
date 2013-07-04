@@ -21,6 +21,7 @@ import org.graphstream.util.time.ISODateIO;
 
 import csss2013.App;
 import csss2013.Process;
+import csss2013.PropertyKeys;
 import csss2013.Trace;
 import csss2013.annotation.Default;
 import csss2013.annotation.Title;
@@ -28,7 +29,7 @@ import csss2013.util.Tools;
 
 @Default
 @Title("Reload")
-public class Reload implements Process {
+public class Reload implements Process, PropertyKeys {
 	public static final String TIMELINE_DATA_NAME = "process.reload.file";
 	public static final String MIN_ANCHOR_DATA_NAME = "process.reload.anchor.min";
 	public static final String MAX_ANCHOR_DATA_NAME = "process.reload.anchor.max";
@@ -99,6 +100,8 @@ public class Reload implements Process {
 	public synchronized void process(App app) {
 		Graph g = new AdjacencyListGraph("reload");
 		Timeline timeline = new Timeline();
+
+		minDistance = app.getPropertyAsDouble(PROCESS_RELOAD_MIN_DISTANCE, 5);
 
 		stacks.clear();
 

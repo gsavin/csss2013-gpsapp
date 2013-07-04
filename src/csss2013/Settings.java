@@ -10,6 +10,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Properties;
 
 public class Settings extends LinkedList<Settings.TraceEntry> {
 	private static final long serialVersionUID = 8775503918062035122L;
@@ -28,6 +29,7 @@ public class Settings extends LinkedList<Settings.TraceEntry> {
 
 	HashSet<String> viewTypes;
 	HashSet<String> processTypes;
+	Properties properties;
 
 	public Settings() {
 		viewTypes = new HashSet<String>();
@@ -46,6 +48,10 @@ public class Settings extends LinkedList<Settings.TraceEntry> {
 	public void setProcess(Collection<String> types) {
 		processTypes.clear();
 		processTypes.addAll(types);
+	}
+	
+	public void setProperties(Properties properties) {
+		this.properties = properties;
 	}
 
 	public void addTrace(String name, File data, String color,

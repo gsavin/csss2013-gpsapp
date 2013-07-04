@@ -8,7 +8,11 @@ package csss2013;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
@@ -16,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Properties;
 
 import javax.swing.JComponent;
 import javax.swing.JDialog;
@@ -38,9 +43,12 @@ import csss2013.view.DynamicView;
 import csss2013.view.GoogleMapsView;
 import csss2013.view.StaticView;
 
-public class App implements Runnable {
+public class App implements PropertyKeys, Runnable {
+	public static final String DEFAULT_PROPERTIES = "default.xml";
+
 	private final static HashMap<String, Class<? extends TraceView>> registeredViews = new HashMap<String, Class<? extends TraceView>>();
 	private final static HashMap<String, Class<? extends Process>> registeredProcess = new HashMap<String, Class<? extends Process>>();
+	private static Properties defaultProperties;
 
 	public static void registerView(String name, Class<? extends TraceView> view) {
 		registeredViews.put(name, view);
@@ -105,6 +113,82 @@ public class App implements Runnable {
 		return name;
 	}
 
+	public static void error(Throwable e) {
+		StringBuilder buffer = new StringBuilder();
+		String message = e.getMessage();
+		buffer.append(e.getClass().getName()).append("\n");
+
+		if (message != null && message.length() > 0)
+			buffer.append(message);
+
+		if (e.getCause() != null) {
+			buffer.append("\nCaused by :\n");
+			buffer.append(e.getCause().getClass().getName());
+			buffer.append("\n");
+
+			message = e.getCause().getMessage();
+
+			if (message != null && message.length() > 0)
+				buffer.append(message);
+		}
+
+		error(buffer.toString());
+
+		e.printStackTrace();
+	}
+
+	public static void error(final String message) {
+		Runnable r = new Runnable() {
+			public void run() {
+				JOptionPane.showMessageDialog(null, message, "Error",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		};
+
+		if (SwingUtilities.isEventDispatchThread())
+			r.run();
+		else
+			try {
+				SwingUtilities.invokeAndWait(r);
+			} catch (InterruptedException e) {
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
+	}
+
+	public static Properties loadProperties(String ressourceName)
+			throws FileNotFoundException {
+		File f = new File(ressourceName);
+		InputStream in = null;
+
+		if (f.exists())
+			in = new FileInputStream(f);
+		else {
+			in = ClassLoader.getSystemResourceAsStream(ressourceName);
+
+			if (in == null)
+				in = App.class.getResourceAsStream(ressourceName);
+		}
+
+		if (in != null)
+			return loadProperties(in);
+
+		return null;
+	}
+
+	public static Properties loadProperties(InputStream in) {
+		Properties prop = new Properties(defaultProperties);
+
+		try {
+			prop.loadFromXML(in);
+			return prop;
+		} catch (Exception e) {
+			App.error(e);
+		}
+
+		return null;
+	}
+
 	static {
 		try {
 			SwingUtilities.invokeAndWait(new Runnable() {
@@ -120,35 +204,130 @@ public class App implements Runnable {
 
 		App.registerView("static", StaticView.class);
 		App.registerView("dynamic", DynamicView.class);
-		App.registerView("Google Maps", GoogleMapsView.class);
+		App.registerView("gmaps", GoogleMapsView.class);
 
 		App.registerProcess("normalize", NormalizeXYZ.class);
 		App.registerProcess("reload", Reload.class);
 		App.registerProcess("merge", Merge.class);
+
+		defaultProperties = new Properties();
+
+		try {
+			InputStream defIn = ClassLoader
+					.getSystemResourceAsStream(DEFAULT_PROPERTIES);
+
+			if (defIn == null)
+				defIn = App.class.getResourceAsStream(DEFAULT_PROPERTIES);
+
+			if (defIn == null)
+				System.out.printf("Default properties file \"%s\" not found\n",
+						DEFAULT_PROPERTIES);
+			else
+				defaultProperties.loadFromXML(defIn);
+		} catch (Exception e) {
+			App.error(e);
+		}
 	}
 
-	Trace[] traces;
-	final LinkedList<String> views;
-	final LinkedList<Process> process;
-	final HashMap<String, Object> data;
-	JFrame progressDialog;
+	protected Trace[] traces;
+	protected final LinkedList<String> views;
+	protected final LinkedList<Process> process;
+	protected final HashMap<String, Object> data;
+	protected JFrame progressDialog;
+	protected Properties properties;
 
 	public App() {
 		this.traces = null;
 		this.process = new LinkedList<Process>();
 		this.views = new LinkedList<String>();
 		this.data = new HashMap<String, Object>();
+		this.properties = defaultProperties;
 	}
 
 	public void run() {
 		SettingsWizard.launch(this);
 	}
 
-	public void setViews(Collection<String> types) {
-		views.addAll(types);
+	public int getTraceCount() {
+		return traces == null ? 0 : traces.length;
 	}
 
-	public JComponent buildView(String name) {
+	public Trace getTrace(int idx) {
+		return traces[idx];
+	}
+
+	/**
+	 * Add a new process. Order of process execution will be computed according
+	 * to their priority.
+	 * 
+	 * @param p
+	 *            the new process
+	 */
+	public void enableProcess(Process p) {
+		process.add(p);
+	}
+
+	public void setData(String name, Object data) {
+		this.data.put(name, data);
+	}
+
+	public Object getData(String name) {
+		return this.data.get(name);
+	}
+
+	public Properties getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Properties prop) {
+		this.properties = prop;
+	}
+
+	public String getProperty(String key) {
+		return properties.getProperty(key);
+	}
+
+	public String getProperty(String key, String def) {
+		return properties.getProperty(key, def);
+	}
+
+	public int getPropertyAsInt(String key) {
+		return getPropertyAsInt(key, 0);
+	}
+
+	public int getPropertyAsInt(String key, int def) {
+		String v = getProperty(key);
+
+		if (v == null)
+			return def;
+
+		try {
+			return Integer.parseInt(v);
+		} catch (NumberFormatException e) {
+			App.error(e);
+			return def;
+		}
+	}
+
+	public double getPropertyAsDouble(String key) {
+		return getPropertyAsDouble(key, Double.NaN);
+	}
+
+	public double getPropertyAsDouble(String key, double def) {
+		String v = getProperty(key);
+
+		if (v == null)
+			return def;
+
+		try {
+			return Double.parseDouble(v);
+		} catch (NumberFormatException e) {
+			App.error(e);
+			return def;
+		}
+	}
+
+	protected JComponent buildView(String name) {
 		if (!registeredViews.containsKey(name)) {
 			App.error("View " + name + " is not registered");
 			return null;
@@ -167,7 +346,7 @@ public class App implements Runnable {
 		return null;
 	}
 
-	public Process buildProcess(String name) {
+	protected Process buildProcess(String name) {
 		if (!registeredProcess.containsKey(name)) {
 			App.error("Process " + name + " is not registered");
 			return null;
@@ -202,7 +381,7 @@ public class App implements Runnable {
 		}
 
 		this.traces = tracesList.toArray(new Trace[0]);
-		setViews(settings.viewTypes);
+		views.addAll(settings.viewTypes);
 
 		process.clear();
 
@@ -215,10 +394,10 @@ public class App implements Runnable {
 	protected void processTerminated() {
 		Runnable r = new Runnable() {
 			public void run() {
+				showViews();
+				
 				progressDialog.setVisible(false);
 				progressDialog = null;
-
-				showViews();
 			}
 		};
 
@@ -233,7 +412,7 @@ public class App implements Runnable {
 			}
 	}
 
-	public void launchProcess() {
+	protected void launchProcess() {
 		JProgressBar bar = new JProgressBar();
 		bar.setIndeterminate(true);
 		progressDialog = new JFrame("");
@@ -249,7 +428,7 @@ public class App implements Runnable {
 		t.start();
 	}
 
-	public void showViews() {
+	protected void showViews() {
 		JTabbedPane tabs = new JTabbedPane();
 
 		tabs.setPreferredSize(new Dimension(640, 640));
@@ -259,61 +438,11 @@ public class App implements Runnable {
 			tabs.addTab(getViewTitle(type), comp);
 		}
 
-		JFrame frame = new JFrame("CSSS2013 : GPS App");
+		JFrame frame = new JFrame(getProperty(APP_TITLE));
 		frame.add(tabs);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
-	}
-
-	public static void error(Throwable e) {
-		error(e.getMessage());
-	}
-
-	public static void error(final String message) {
-		Runnable r = new Runnable() {
-			public void run() {
-				JOptionPane.showMessageDialog(null, message, "Error",
-						JOptionPane.ERROR_MESSAGE);
-			}
-		};
-
-		if (SwingUtilities.isEventDispatchThread())
-			r.run();
-		else
-			try {
-				SwingUtilities.invokeAndWait(r);
-			} catch (InterruptedException e) {
-			} catch (InvocationTargetException e) {
-				e.printStackTrace();
-			}
-	}
-
-	public int getTraceCount() {
-		return traces == null ? 0 : traces.length;
-	}
-
-	public Trace getTrace(int idx) {
-		return traces[idx];
-	}
-
-	/**
-	 * Add a new process. Order of process execution will be computed according
-	 * to their priority.
-	 * 
-	 * @param p
-	 *            the new process
-	 */
-	public void enableProcess(Process p) {
-		process.add(p);
-	}
-
-	public void setData(String name, Object data) {
-		this.data.put(name, data);
-	}
-
-	public Object getData(String name) {
-		return this.data.get(name);
 	}
 
 	class ProcessWorker implements Runnable {
