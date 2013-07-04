@@ -10,6 +10,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -51,13 +52,15 @@ public class SettingsWizard extends JPanel {
 	Palette palette;
 	TraceFileModel model;
 	App app;
-	HashSet<TraceView.Type> viewTypes;
+	HashSet<String> viewTypes;
+	HashSet<String> processTypes;
 
 	public SettingsWizard(App app) {
 		this.app = app;
 		this.dialog = new JFrame("CSSS2013 - GPS App : Setup");
 		this.model = new TraceFileModel();
-		this.viewTypes = new HashSet<TraceView.Type>();
+		this.viewTypes = new HashSet<String>();
+		this.processTypes = new HashSet<String>();
 		this.palette = new Palette();
 
 		JTable entries = new JTable(model);
@@ -72,25 +75,42 @@ public class SettingsWizard extends JPanel {
 
 		JScrollPane tableContainer = new JScrollPane(entries);
 
-		JPanel checkboxes = new JPanel();
-		checkboxes.add(new JLabel("Select views:"));
+		JPanel checkboxesView = new JPanel();
+		checkboxesView.setLayout(new FlowLayout(FlowLayout.LEFT));
+		checkboxesView.add(new JLabel("Select views:"));
 
-		for (TraceView.Type t : TraceView.Type.values()) {
-			ViewTypeAction a = new ViewTypeAction(t);
+		viewTypes.addAll(App.getDefaultViewName());
+
+		for (String name : App.getRegisteredViewName()) {
+			ViewTypeAction a = new ViewTypeAction(name);
 			JCheckBox box = new JCheckBox(a);
 
-			checkboxes.add(box);
+			checkboxesView.add(box);
 
-			switch (t) {
-			case STATIC:
-			case DYNAMIC:
+			if (viewTypes.contains(name))
 				box.setSelected(true);
-				viewTypes.add(t);
-				break;
-			default:
-				break;
-			}
 		}
+
+		JPanel checkboxesProcess = new JPanel();
+		checkboxesProcess.setLayout(new FlowLayout(FlowLayout.LEFT));
+		checkboxesProcess.add(new JLabel("Select process:"));
+
+		processTypes.addAll(App.getDefaultProcessName());
+
+		for (String name : App.getRegisteredProcessName()) {
+			ProcessTypeAction a = new ProcessTypeAction(name);
+			JCheckBox box = new JCheckBox(a);
+
+			checkboxesProcess.add(box);
+
+			if (processTypes.contains(name))
+				box.setSelected(true);
+		}
+
+		JPanel checkboxes = new JPanel();
+		checkboxes.setLayout(new GridLayout(2, 1));
+		checkboxes.add(checkboxesView);
+		checkboxes.add(checkboxesProcess);
 
 		JPanel center = new JPanel();
 		center.setLayout(new BorderLayout());
@@ -143,7 +163,7 @@ public class SettingsWizard extends JPanel {
 		}
 
 		public void actionPerformed(ActionEvent arg0) {
-			app.error("Don't worry. This cool feature will come soon !");
+			App.error("Don't worry. This cool feature will come soon !");
 		}
 	}
 
@@ -156,10 +176,10 @@ public class SettingsWizard extends JPanel {
 
 		public void actionPerformed(ActionEvent arg0) {
 			if (model.getRowCount() == 0) {
-				app.error("No GPX trace selected");
+				App.error("No GPX trace selected");
 				return;
 			}
-			
+
 			Settings settings = model.getSettings();
 			dialog.setVisible(false);
 			app.wizardCompleted(settings);
@@ -182,10 +202,10 @@ public class SettingsWizard extends JPanel {
 	class ViewTypeAction extends AbstractAction {
 		private static final long serialVersionUID = 8253837349628000598L;
 
-		TraceView.Type type;
+		String type;
 
-		public ViewTypeAction(TraceView.Type type) {
-			super(type.name);
+		public ViewTypeAction(String type) {
+			super(App.getViewTitle(type));
 			this.type = type;
 		}
 
@@ -199,6 +219,32 @@ public class SettingsWizard extends JPanel {
 					viewTypes.add(type);
 				else if (!box.isSelected() && viewTypes.contains(type))
 					viewTypes.remove(type);
+			} else {
+				System.err.printf("Not a checkbox !\n");
+			}
+		}
+	}
+
+	class ProcessTypeAction extends AbstractAction {
+		private static final long serialVersionUID = 8253837349628000598L;
+
+		String type;
+
+		public ProcessTypeAction(String type) {
+			super(App.getProcessTitle(type));
+			this.type = type;
+		}
+
+		public void actionPerformed(ActionEvent arg0) {
+			Object src = arg0.getSource();
+
+			if (src instanceof JCheckBox) {
+				JCheckBox box = (JCheckBox) src;
+
+				if (box.isSelected() && !processTypes.contains(type))
+					processTypes.add(type);
+				else if (!box.isSelected() && processTypes.contains(type))
+					processTypes.remove(type);
 			} else {
 				System.err.printf("Not a checkbox !\n");
 			}
@@ -276,6 +322,7 @@ public class SettingsWizard extends JPanel {
 		public Settings getSettings() {
 			Settings settings = new Settings();
 			settings.setViews(viewTypes);
+			settings.setProcess(processTypes);
 
 			for (int i = 0; i < data.length; i++) {
 				String name = (String) data[i][0];

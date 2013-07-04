@@ -1,3 +1,9 @@
+/*
+ * This file is a part of a project under the terms of the GPL3.
+ * You can find these terms in the COPYING file distributed with the project.
+ * 
+ *  Copyright 2013 Guilhelm Savin
+ */
 package csss2013.view;
 
 import java.awt.event.ComponentEvent;
@@ -14,8 +20,12 @@ import org.graphstream.ui.swingViewer.Viewer;
 
 import csss2013.App;
 import csss2013.TraceView;
+import csss2013.annotation.Default;
+import csss2013.annotation.Title;
 import csss2013.process.Reload;
 
+@Default
+@Title("Dynamic")
 public class DynamicView implements TraceView {
 	public JComponent build(App app) {
 		Timeline timeline = (Timeline) app.getData(Reload.TIMELINE_DATA_NAME);
@@ -25,13 +35,24 @@ public class DynamicView implements TraceView {
 			return new JLabel("Unavailable");
 		}
 
+		double[] anchorMin = (double[]) app
+				.getData(Reload.MIN_ANCHOR_DATA_NAME);
+		double[] anchorMax = (double[]) app
+				.getData(Reload.MAX_ANCHOR_DATA_NAME);
+
 		Graph tmp = new AdjacencyListGraph("dynamic");
-		timeline.addSink(tmp);
 
 		Viewer reloadViewer = new Viewer(tmp,
 				Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
 		View reloadView = reloadViewer.addDefaultView(false);
 		reloadView.setMouseManager(null);
+		reloadView.getCamera().setAutoFitView(false);
+		reloadView.getCamera().setGraphViewport(anchorMin[0], anchorMin[1],
+				anchorMax[0], anchorMax[1]);
+		reloadView.getCamera().setViewPercent(2.5);
+		reloadView.getCamera().setViewCenter(
+				(anchorMax[0] + anchorMin[0]) / 2.0,
+				(anchorMax[1] + anchorMin[1]) / 2.0, 0);
 
 		Controller c = new Controller(tmp, timeline);
 		reloadView.addComponentListener(c);
@@ -63,15 +84,19 @@ public class DynamicView implements TraceView {
 			g.clear();
 			timeline.seekStart();
 
+			timeline.addSink(g);
+
 			while (timeline.hasNext() && !current.isInterrupted()) {
 				timeline.next();
 
 				try {
-					Thread.sleep(100);
+					Thread.sleep(50);
 				} catch (InterruptedException e) {
 					break;
 				}
 			}
+
+			timeline.removeSink(g);
 		}
 
 		protected void kill() {
@@ -80,10 +105,8 @@ public class DynamicView implements TraceView {
 
 			if (t != null)
 				try {
-					System.out.printf("Join\n");
 					t.interrupt();
 					t.join();
-					System.out.printf("End\n");
 				} catch (InterruptedException e) {
 				}
 		}

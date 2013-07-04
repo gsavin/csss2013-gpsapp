@@ -1,3 +1,9 @@
+/*
+ * This file is a part of a project under the terms of the GPL3.
+ * You can find these terms in the COPYING file distributed with the project.
+ * 
+ *  Copyright 2013 Guilhelm Savin
+ */
 package csss2013.view;
 
 import java.awt.image.BufferedImage;
@@ -20,7 +26,9 @@ import org.graphstream.graph.Node;
 import csss2013.App;
 import csss2013.Trace;
 import csss2013.TraceView;
+import csss2013.annotation.Title;
 
+@Title("Google Maps")
 public class GoogleMapsView implements TraceView {
 	/*
 	 * (non-Javadoc)
@@ -60,8 +68,6 @@ public class GoogleMapsView implements TraceView {
 		URL url;
 		HttpURLConnection connection = null;
 		BufferedImage gmapsImg = null;
-
-		System.err.printf("%s?%s\n", targetURL, urlParameters);
 
 		try {
 			byte[] body = urlParameters.getBytes("UTF-8");

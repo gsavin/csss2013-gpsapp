@@ -22,9 +22,16 @@ import org.graphstream.util.time.ISODateIO;
 import csss2013.App;
 import csss2013.Process;
 import csss2013.Trace;
+import csss2013.annotation.Default;
+import csss2013.annotation.Title;
+import csss2013.util.Tools;
 
+@Default
+@Title("Reload")
 public class Reload implements Process {
 	public static final String TIMELINE_DATA_NAME = "process.reload.file";
+	public static final String MIN_ANCHOR_DATA_NAME = "process.reload.anchor.min";
+	public static final String MAX_ANCHOR_DATA_NAME = "process.reload.anchor.max";
 
 	protected class Entry implements Comparable<Entry> {
 		long time;
@@ -68,7 +75,7 @@ public class Reload implements Process {
 	/**
 	 * In meters.
 	 */
-	double minDistance = 1;
+	double minDistance = 5;
 
 	public Reload() {
 		stacks = new HashMap<Trace, EntryStack>();
@@ -97,6 +104,23 @@ public class Reload implements Process {
 
 		for (int idx = 0; idx < app.getTraceCount(); idx++)
 			load(app.getTrace(idx));
+
+		double minX, minY, maxX, maxY;
+		minX = minY = Double.MAX_VALUE;
+		maxX = maxY = Double.MIN_VALUE;
+
+		for (EntryStack stack : stacks.values())
+			for (int i = 0; i < stack.size(); i++) {
+				double[] xyz = stack.get(i).traceNode.getAttribute("xyz");
+
+				minX = Math.min(minX, xyz[0]);
+				minY = Math.min(minY, xyz[1]);
+				maxX = Math.max(maxX, xyz[0]);
+				maxY = Math.max(maxY, xyz[1]);
+			}
+
+		app.setData(MIN_ANCHOR_DATA_NAME, new double[] { minX, minY });
+		app.setData(MAX_ANCHOR_DATA_NAME, new double[] { maxX, maxY });
 
 		timeline.begin(g);
 		reload(g);
@@ -191,34 +215,9 @@ public class Reload implements Process {
 	protected void reload(Graph g) {
 		reset();
 
-		double minX, minY, maxX, maxY;
-		minX = minY = Double.MAX_VALUE;
-		maxX = maxY = Double.MIN_VALUE;
-
-		for (EntryStack stack : stacks.values())
-			for (int i = 0; i < stack.size(); i++) {
-				double[] xyz = stack.get(i).traceNode.getAttribute("xyz");
-
-				minX = Math.min(minX, xyz[0]);
-				minY = Math.min(minY, xyz[1]);
-				maxX = Math.max(maxX, xyz[0]);
-				maxY = Math.max(maxY, xyz[1]);
-			}
-
 		g.addAttribute("ui.stylesheet", stylesheet);
 		g.addAttribute("ui.quality");
 		g.addAttribute("ui.antialias");
-		g.addAttribute("anchor-min", new double[] { minX, minY, 0 });
-		g.addAttribute("anchor-max", new double[] { maxX, maxY, 0 });
-		// addAttribute("tick", theTick);
-
-		Node anchorMin = g.addNode("anchor-min");
-		anchorMin.addAttribute("xyz", new double[] { minX, minY, 0 });
-		anchorMin.addAttribute("ui.class", "anchor");
-
-		Node anchorMax = g.addNode("anchor-max");
-		anchorMax.addAttribute("xyz", new double[] { maxX, maxY, 0 });
-		anchorMax.addAttribute("ui.class", "anchor");
 
 		while (hasRemaining()) {
 			EntryStack current = getNextStack();
@@ -230,10 +229,6 @@ public class Reload implements Process {
 			for (EntryStack stack : stacks.values()) {
 				if (!stack.hasRemaining())
 					continue;
-
-				//while (stack.position < stack.size() - 1
-				//		&& stack.get(stack.position + 1).time <= date)
-				//	stack.position++;
 
 				if (stack.position == stack.size() - 1
 						&& stack.current().time < date) {
@@ -255,9 +250,9 @@ public class Reload implements Process {
 
 				double[] xyz = traceNode.getAttribute("xyz");
 				double[] xyz1 = stack.current().traceNode.getAttribute("xyz");
+				double lat = stack.current().traceNode.getNumber("lat");
+				double lon = stack.current().traceNode.getNumber("lon");
 
-				System.out.printf("> (%f;%f)\n", xyz[0], xyz[1]);
-				
 				if (stack.position == stack.size() - 1) {
 					xyz[0] = xyz1[0];
 					xyz[1] = xyz1[1];
@@ -268,11 +263,16 @@ public class Reload implements Process {
 
 					xyz[0] = xyz1[0] + ratio * (xyz2[0] - xyz1[0]);
 					xyz[1] = xyz1[1] + ratio * (xyz2[1] - xyz1[1]);
+
+					lat += ratio
+							* (stack.next().traceNode.getNumber("lat") - lat);
+					lon += ratio
+							* (stack.next().traceNode.getNumber("lon") - lon);
 				}
 
-				System.out.printf(">> (%f;%f)\n", xyz[0], xyz[1]);
-				
 				traceNode.setAttribute("xyz", xyz);
+				traceNode.setAttribute("lat", lat);
+				traceNode.setAttribute("lon", lon);
 			}
 
 			checkLinks(g);
@@ -281,33 +281,26 @@ public class Reload implements Process {
 	}
 
 	protected void checkLinks(Graph g) {
-		for (int i = 0; i < g.getNodeCount() - 1; i++)
+		for (int i = 0; i < g.getNodeCount() - 1; i++) {
+			Node n1 = g.getNode(i);
+
 			for (int j = i + 1; j < g.getNodeCount(); j++) {
-				Node n1 = g.getNode(i);
 				Node n2 = g.getNode(j);
 				Edge e = n1.getEdgeBetween(n2);
 
-				double d = distance(n1, n2);
+				double d = Tools.distance(n1, n2);
 
 				if (e == null) {
-					if (d <= minDistance)
-						g.addEdge(n1.getId() + "__" + n2.getId(), n1, n2);
+					if (d <= minDistance) {
+						e = g.addEdge(n1.getId() + "__" + n2.getId(), n1, n2);
+						e.setAttribute("distance", d);
+					}
 				} else if (d > minDistance)
 					g.removeEdge(e);
+				else
+					e.setAttribute("distance", d);
 			}
+		}
 	}
 
-	protected double distance(Node n1, Node n2) {
-		double R = 6371000;
-		double lat1 = n1.getNumber("lat"), lat2 = n2.getNumber("lat"), lon1 = n1
-				.getNumber("lon"), lon2 = n2.getNumber("lon");
-		double dLat = (lat2 - lat1) / 360.0 * (2 * Math.PI);
-		double dLon = (lon2 - lon1) / 360.0 * (2 * Math.PI);
-
-		double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.sin(dLon / 2)
-				* Math.sin(dLon / 2) * Math.cos(lat1) * Math.cos(lat2);
-		double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-		return R * c;
-	}
 }

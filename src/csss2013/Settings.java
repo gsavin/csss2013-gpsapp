@@ -26,19 +26,28 @@ public class Settings extends LinkedList<Settings.TraceEntry> {
 		}
 	}
 
-	HashSet<TraceView.Type> viewTypes;
+	HashSet<String> viewTypes;
+	HashSet<String> processTypes;
 
 	public Settings() {
-		viewTypes = new HashSet<TraceView.Type>();
-		viewTypes.add(TraceView.Type.STATIC);
-		viewTypes.add(TraceView.Type.DYNAMIC);
+		viewTypes = new HashSet<String>();
+		processTypes = new HashSet<String>();
+		viewTypes.add("static");
+		viewTypes.add("dynamic");
+		processTypes.add("normalize");
+		processTypes.add("reload");
 	}
 
-	public void setViews(Collection<TraceView.Type> types) {
+	public void setViews(Collection<String> types) {
 		viewTypes.clear();
 		viewTypes.addAll(types);
 	}
-	
+
+	public void setProcess(Collection<String> types) {
+		processTypes.clear();
+		processTypes.addAll(types);
+	}
+
 	public void addTrace(String name, File data, String color,
 			String additionnalStyle) {
 		TraceEntry te = new TraceEntry();

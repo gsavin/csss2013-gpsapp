@@ -1,34 +1,31 @@
+/*
+ * This file is a part of a project under the terms of the GPL3.
+ * You can find these terms in the COPYING file distributed with the project.
+ * 
+ *  Copyright 2013 Guilhelm Savin
+ */
 package csss2013;
 
 import javax.swing.JComponent;
 
-import csss2013.view.DynamicView;
-import csss2013.view.GoogleMapsView;
-import csss2013.view.StaticView;
-
+/**
+ * Defines a new view of the app.
+ * 
+ * The view has to be registered using
+ * {@link csss2013.App#registerView(String, Class)}. You can add the annotation
+ * {@link csss2013.annotation.Default} to define the view as a default, and the
+ * annotation {@link csss2013.annotation.Title} to set the title of this view.
+ * 
+ * @author Guilhelm Savin
+ * 
+ */
 public interface TraceView {
-	public static enum Type {
-		STATIC("Static", StaticView.class, 90), DYNAMIC("Dynamic",
-				DynamicView.class, 100), GOOGLE_MAPS("Google Maps",
-				GoogleMapsView.class, 10);
-
-		int priority;
-		String name;
-		Class<? extends TraceView> clazz;
-
-		Type(String name, Class<? extends TraceView> clazz, int priority) {
-			this.name = name;
-			this.clazz = clazz;
-			this.priority = priority;
-		}
-
-		public JComponent getTraceView(App app)
-				throws InstantiationException, IllegalAccessException {
-			System.out.printf("Create %s view\n", name);
-			TraceView view = clazz.newInstance();
-			return view.build(app);
-		}
-	}
-
+	/**
+	 * Build a new view of this type. Just have to return a JComponent.
+	 * 
+	 * @param app
+	 *            the current app
+	 * @return a component defining the view
+	 */
 	JComponent build(App app);
 }
