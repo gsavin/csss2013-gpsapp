@@ -14,6 +14,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -30,9 +31,6 @@ import javax.swing.JOptionPane;
 import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
-
-import org.pushingpixels.substance.api.SubstanceLookAndFeel;
-import org.pushingpixels.substance.api.skin.GraphiteGlassSkin;
 
 import csss2013.annotation.Default;
 import csss2013.annotation.Title;
@@ -193,9 +191,22 @@ public class App implements PropertyKeys, Runnable {
 		try {
 			SwingUtilities.invokeAndWait(new Runnable() {
 				public void run() {
-					SubstanceLookAndFeel.setSkin(new GraphiteGlassSkin());
-					JFrame.setDefaultLookAndFeelDecorated(true);
-					JDialog.setDefaultLookAndFeelDecorated(false);
+					try {
+						Class<?> substance = Class
+								.forName("org.pushingpixels.substance.api.SubstanceLookAndFeel");
+						Class<?> skin = Class
+								.forName("org.pushingpixels.substance.api.SubstanceSkin");
+						Class<?> appSkin = Class
+								.forName("org.pushingpixels.substance.api.skin.GraphiteGlassSkin");
+
+						Method setSkin = substance.getMethod("setSkin", skin);
+						setSkin.invoke(null, appSkin.newInstance());
+						
+						JFrame.setDefaultLookAndFeelDecorated(true);
+						JDialog.setDefaultLookAndFeelDecorated(false);
+					} catch (Exception e) {
+						System.err.printf("Substance is disabled\n");
+					}
 				}
 			});
 		} catch (Exception e1) {
@@ -395,7 +406,7 @@ public class App implements PropertyKeys, Runnable {
 		Runnable r = new Runnable() {
 			public void run() {
 				showViews();
-				
+
 				progressDialog.setVisible(false);
 				progressDialog = null;
 			}

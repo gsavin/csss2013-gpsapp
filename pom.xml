@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+	<!--
+		This file is part of GraphStream <http://graphstream-project.org>.
+		GraphStream is a library whose purpose is to handle static or dynamic
+		graph, create them from scratch, file or any source and display them.
+		This program is free software distributed under the terms of two
+		licenses, the CeCILL-C license that fits European law, and the GNU
+		Lesser General Public License. You can use, modify and/ or
+		redistribute the software under the terms of the CeCILL-C license as
+		circulated by CEA, CNRS and INRIA at the following URL
+		<http://www.cecill.info> or under the terms of the GNU LGPL as
+		published by the Free Software Foundation, either version 3 of the
+		License, or (at your option) any later version. This program is
+		distributed in the hope that it will be useful, but WITHOUT ANY
+		WARRANTY; without even the implied warranty of MERCHANTABILITY or
+		FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public
+		License for more details. You should have received a copy of the GNU
+		Lesser General Public License along with this program. If not, see
+		<http://www.gnu.org/licenses/>. The fact that you are presently
+		reading this means that you have had knowledge of the CeCILL-C and
+		LGPL licenses and that you accept their terms.
+	-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
+
+	<groupId>org.graphstream</groupId>
+	<artifactId>csss2013-gpsapp</artifactId>
+	<version>0.1-SNAPSHOT</version>
+
+	<name>csss2013-gpsapp</name>
+	<description>
+		Application to exploit GPS traces created on the CSSS2013 Summer School.
+	</description>
+	<url>http://graphstream-project.org</url>
+
+	<!-- Source code is hosted on GitHub. -->
+	<scm>
+		<connection>scm:git:git://github.com/gsavin/csss2013-gpsapp.git</connection>
+		<developerConnection>scm:git:git://github.com/gsavin/csss2013-gpsapp.git</developerConnection>
+		<url>https://github.com/gsavin/csss2013-gpsapp</url>
+	</scm>
+
+	<issueManagement>
+		<system>github</system>
+		<url>https://github.com/gsavin/csss2013-gpsapp/issues</url>
+	</issueManagement>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<developers>
+		<developer>
+			<id>gsavin</id>
+			<name>Guilhelm Savin</name>
+			<email>guilhelm.savin@graphstream-project.org</email>
+			<organization>LITIS</organization>
+			<organizationUrl>http://www.litislab.eu</organizationUrl>
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>GPL3</name>
+			<url>http://www.gnu.org/copyleft/gpl3.html</url>
+		</license>
+	</licenses>
+
+	 <repositories>
+        <repository>
+                <releases>
+                        <enabled>false</enabled>
+                        <updatePolicy>always</updatePolicy>
+                        <checksumPolicy>warn</checksumPolicy>
+                </releases>
+                <snapshots>
+                        <enabled>true</enabled>
+                        <updatePolicy>never</updatePolicy>
+                        <checksumPolicy>fail</checksumPolicy>
+                </snapshots>
+                <id>sonatype-nexus-snapshots</id>
+                <name>Sonatype Nexus Snapshots</name>
+                <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+	
+	<build>
+		<sourceDirectory>src</sourceDirectory>
+		<outputDirectory>bin</outputDirectory>
+		<testSourceDirectory>src-test</testSourceDirectory>
+		<defaultGoal>compile</defaultGoal>
+
+		<resources>
+			<!-- Resources other than classes are included here. -->
+			<!-- 
+			<resource>
+				<directory>src</directory>
+			</resource>
+			-->
+		</resources>
+
+		<testResources>
+			<testResource>
+				<directory>src-test</directory>
+				<includes>
+					<include>csss2013/**/test/data/**</include>
+				</includes>
+			</testResource>
+		</testResources>
+
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<artifactId>maven-eclipse-plugin</artifactId>
+				<groupId>org.apache.maven.plugins</groupId>
+				<configuration>
+					<sourceIncludes>
+						<include>**</include>
+					</sourceIncludes>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.3.1</version>
+			<optional>false</optional>
+		</dependency>
+		<dependency>
+			<groupId>org.graphstream</groupId>
+			<artifactId>gs-core</artifactId>
+			<version>1.3-SNAPSHOT</version>
+			<optional>false</optional>
+		</dependency>
+		<dependency>
+			<groupId>com.github.insubstantial</groupId>
+			<artifactId>substance</artifactId>
+			<version>7.2.1</version>
+			<optional>true</optional>
+		</dependency>
+	</dependencies>
+</project>

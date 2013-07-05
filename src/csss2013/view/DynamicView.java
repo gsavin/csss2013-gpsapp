@@ -19,6 +19,7 @@ import org.graphstream.ui.swingViewer.View;
 import org.graphstream.ui.swingViewer.Viewer;
 
 import csss2013.App;
+import csss2013.PropertyKeys;
 import csss2013.TraceView;
 import csss2013.annotation.Default;
 import csss2013.annotation.Title;
@@ -26,7 +27,7 @@ import csss2013.process.Reload;
 
 @Default
 @Title("Dynamic")
-public class DynamicView implements TraceView {
+public class DynamicView implements TraceView, PropertyKeys {
 	public JComponent build(App app) {
 		Timeline timeline = (Timeline) app.getData(Reload.TIMELINE_DATA_NAME);
 
@@ -54,7 +55,7 @@ public class DynamicView implements TraceView {
 				(anchorMax[0] + anchorMin[0]) / 2.0,
 				(anchorMax[1] + anchorMin[1]) / 2.0, 0);
 
-		Controller c = new Controller(tmp, timeline);
+		Controller c = new Controller(app, tmp, timeline);
 		reloadView.addComponentListener(c);
 
 		return reloadView;
@@ -67,10 +68,12 @@ public class DynamicView implements TraceView {
 		Timeline timeline;
 		Graph g;
 		double acceleration;
+		App app;
 
-		public Controller(Graph g, Timeline timeline) {
+		public Controller(App app, Graph g, Timeline timeline) {
 			this.timeline = timeline;
 			this.g = g;
+			this.app = app;
 		}
 
 		public void run() {
@@ -81,6 +84,8 @@ public class DynamicView implements TraceView {
 		}
 
 		protected void play() {
+			int tick = app.getPropertyAsInt(VIEWS_DYNAMIC_TICKS, 50);
+
 			g.clear();
 			timeline.seekStart();
 
@@ -90,7 +95,7 @@ public class DynamicView implements TraceView {
 				timeline.next();
 
 				try {
-					Thread.sleep(50);
+					Thread.sleep(tick);
 				} catch (InterruptedException e) {
 					break;
 				}

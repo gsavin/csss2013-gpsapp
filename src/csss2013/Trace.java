@@ -10,7 +10,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 
+import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.file.FileSourceGPX;
 import org.graphstream.ui.swingViewer.Viewer;
@@ -97,5 +99,55 @@ public class Trace extends AdjacencyListGraph {
 	@Override
 	public Viewer display() {
 		return display(false);
+	}
+
+	public Iterator<Node> getTracePath() {
+		return new Path();
+	}
+
+	class Path implements Iterator<Node> {
+		Node current;
+
+		public Path() {
+			for (Node n : Trace.this) {
+				if (n.getInDegree() == 0) {
+					current = n;
+					break;
+				}
+			}
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Iterator#hasNext()
+		 */
+		public boolean hasNext() {
+			return current != null;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Iterator#next()
+		 */
+		public Node next() {
+			Node next = current;
+
+			if (current.getOutDegree() > 0)
+				current = current.getLeavingEdge(0).getOpposite(current);
+			else
+				current = null;
+
+			return next;
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Iterator#remove()
+		 */
+		public void remove() {
+		}
 	}
 }

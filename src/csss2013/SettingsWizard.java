@@ -13,14 +13,18 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.AbstractCellEditor;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JColorChooser;
@@ -98,10 +102,27 @@ public class SettingsWizard extends JPanel {
 		center.add(tableContainer, BorderLayout.CENTER);
 		center.add(checkboxes, BorderLayout.SOUTH);
 
+		JPanel top = new JPanel();
+		top.setLayout(new GridLayout(2, 1));
+
+		try {
+			BufferedImage headerImage = ImageIO.read(App.class
+					.getResourceAsStream("data/icon.png"));
+			ImageIcon headerIcon = new ImageIcon(headerImage);
+			JLabel header = new JLabel("CSSS2013 : GPS App", headerIcon,
+					JLabel.CENTER);
+			header.setFont(header.getFont().deriveFont(20.0f));
+			
+			top.add(header);
+		} catch (IOException e) {
+		}
+
 		JPanel topButtons = new JPanel();
 		topButtons.setLayout(new FlowLayout(FlowLayout.LEFT));
 		topButtons.add(new JButton(new AddTraceAction()));
 		topButtons.add(new JButton(new LoadAction()));
+
+		top.add(topButtons);
 
 		JPanel bottomButtons = new JPanel();
 		bottomButtons.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -109,7 +130,7 @@ public class SettingsWizard extends JPanel {
 		bottomButtons.add(new JButton(new CancelAction()));
 
 		setLayout(new BorderLayout());
-		add(topButtons, BorderLayout.NORTH);
+		add(top, BorderLayout.NORTH);
 		add(center, BorderLayout.CENTER);
 		add(bottomButtons, BorderLayout.SOUTH);
 

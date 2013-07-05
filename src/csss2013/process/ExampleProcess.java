@@ -1,5 +1,7 @@
 package csss2013.process;
 
+import java.util.Iterator;
+
 import org.graphstream.graph.Node;
 
 import csss2013.App;
@@ -44,31 +46,20 @@ public class ExampleProcess implements Process {
 			//
 			// We start with the initial node
 			//
-			Node current = null, next = null;
+			Iterator<Node> ite = trace.getTracePath();
+			Node current = ite.next(), next = null;
 
-			for (Node n : trace) {
-				if (n.getInDegree() == 0) {
-					current = n;
-					break;
-				}
-			}
-
-			//
 			//
 			// Then we compute distance and time between each peer of nodes
-			do {
-				if (current.getOutDegree() > 0)
-					next = current.getLeavingEdge(0).getOpposite(current);
-				else
-					next = null;
-
-				if (next != null) {
-					distance += Tools.distance(current, next);
-					time += (Tools.getTime(next) - Tools.getTime(current)) / 1000.0;
-				}
+			// 
+			while (ite.hasNext()) {
+				next = ite.next();
+				
+				distance += Tools.distance(current, next);
+				time += (Tools.getTime(next) - Tools.getTime(current)) / 1000.0;
 
 				current = next;
-			} while (current != null);
+			}
 
 			double speed = (distance / 1000.0) / (time / 3600.0);
 
