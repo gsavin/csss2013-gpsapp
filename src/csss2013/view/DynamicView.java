@@ -47,13 +47,9 @@ public class DynamicView implements TraceView, PropertyKeys {
 				Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
 		View reloadView = reloadViewer.addDefaultView(false);
 		reloadView.setMouseManager(null);
-		reloadView.getCamera().setAutoFitView(false);
+		
 		reloadView.getCamera().setGraphViewport(anchorMin[0], anchorMin[1],
 				anchorMax[0], anchorMax[1]);
-		reloadView.getCamera().setViewPercent(2.5);
-		reloadView.getCamera().setViewCenter(
-				(anchorMax[0] + anchorMin[0]) / 2.0,
-				(anchorMax[1] + anchorMin[1]) / 2.0, 0);
 
 		Controller c = new Controller(app, tmp, timeline);
 		reloadView.addComponentListener(c);

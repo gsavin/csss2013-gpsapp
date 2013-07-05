@@ -102,6 +102,8 @@ public class Reload implements Process, PropertyKeys {
 		Timeline timeline = new Timeline();
 
 		minDistance = app.getPropertyAsDouble(PROCESS_RELOAD_MIN_DISTANCE, 5);
+		stylesheet = app.getProperty(VIEWS_DYNAMIC_STYLESHEET,
+				"node {size:15px;}");
 
 		stacks.clear();
 

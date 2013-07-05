@@ -1,6 +1,7 @@
 package csss2013.process;
 
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.graphstream.graph.Node;
 
@@ -10,7 +11,7 @@ import csss2013.Trace;
 import csss2013.annotation.Title;
 import csss2013.util.Tools;
 
-@Title("My Crazy Process")
+@Title("Speed")
 public class ExampleProcess implements Process {
 	//
 	// Defines data name :
@@ -18,6 +19,7 @@ public class ExampleProcess implements Process {
 	public static final String DISTANCE_DATA_NAME = "process.example.distance";
 	public static final String TIME_DATA_NAME = "process.example.time";
 	public static final String SPEED_DATA_NAME = "process.example.speed";
+	public static final String SPEED_SERIES_DATA_NAME = "process.example.speed.series";
 
 	/*
 	 * (non-Javadoc)
@@ -40,6 +42,11 @@ public class ExampleProcess implements Process {
 		//
 		double distance = 0, time = 0;
 
+		double currentDistance = 0;
+		double currentTime = 0;
+
+		LinkedList<double[]> series = new LinkedList<double[]>();
+
 		for (int idx = 0; idx < app.getTraceCount(); idx++) {
 			Trace trace = app.getTrace(idx);
 
@@ -51,12 +58,28 @@ public class ExampleProcess implements Process {
 
 			//
 			// Then we compute distance and time between each peer of nodes
-			// 
+			//
 			while (ite.hasNext()) {
 				next = ite.next();
-				
-				distance += Tools.distance(current, next);
-				time += (Tools.getTime(next) - Tools.getTime(current)) / 1000.0;
+
+				long t1 = Tools.getTime(current);
+				long t2 = Tools.getTime(next);
+				double d = Tools.distance(current, next);
+
+				distance += d;
+				currentDistance += d;
+				time += (t2 - t1) / 1000.0;
+				currentTime += (t2 - t1) / 1000.0;
+
+				if (currentDistance > 50) {
+					double[] e = { time,
+							(currentDistance / 1000.0) / (currentTime / 3600.0) };
+
+					series.add(e);
+
+					currentDistance = 0;
+					currentTime = 0;
+				}
 
 				current = next;
 			}
@@ -66,6 +89,8 @@ public class ExampleProcess implements Process {
 			app.setData(DISTANCE_DATA_NAME, distance);
 			app.setData(TIME_DATA_NAME, time);
 			app.setData(SPEED_DATA_NAME, speed);
+			app.setData(SPEED_SERIES_DATA_NAME, series.toArray());
+			app.setData(SPEED_SERIES_DATA_NAME + ".title", "speed");
 		}
 	}
 }

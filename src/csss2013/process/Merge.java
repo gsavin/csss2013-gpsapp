@@ -7,13 +7,14 @@ import org.graphstream.graph.implementations.AdjacencyListGraph;
 
 import csss2013.App;
 import csss2013.Process;
+import csss2013.PropertyKeys;
 import csss2013.Trace;
 import csss2013.annotation.Default;
 import csss2013.annotation.Title;
 
 @Default
 @Title("Merge")
-public class Merge implements Process {
+public class Merge implements Process, PropertyKeys {
 	public static final String DATA_NAME = "process.merge.graph";
 
 	/*
@@ -32,13 +33,16 @@ public class Merge implements Process {
 	 */
 	public void process(App app) {
 		Graph g = new AdjacencyListGraph("merged");
-		String stylesheet = "node {size:15px;}";
+		String stylesheet = app.getProperty(VIEWS_STATIC_STYLESHEET,
+				"node {size:10px;}");
 
 		for (int idx = 0; idx < app.getTraceCount(); idx++) {
 			Trace trace = app.getTrace(idx);
+			String traceStyle = String.format("fill-color:%s;%s",
+					trace.getColor(), trace.getCustomStyle());
 
-			stylesheet += String.format(" node.%s {fill-color:%s;%s}",
-					trace.getId(), trace.getColor(), trace.getCustomStyle());
+			stylesheet += String.format(" node.%s {%s} edge.%s {%s}",
+					trace.getId(), traceStyle, trace.getId(), traceStyle);
 
 			for (int i = 0; i < trace.getNodeCount(); i++) {
 				Node o = trace.getNode(i);
@@ -57,6 +61,8 @@ public class Merge implements Process {
 						.getSourceNode().getId()), String.format("%s:%s",
 						trace.getId(), o.getTargetNode().getId()), o
 						.isDirected());
+
+				e.addAttribute("ui.class", trace.getId());
 
 				for (String key : o.getAttributeKeySet())
 					e.addAttribute(key, o.getAttribute(key));

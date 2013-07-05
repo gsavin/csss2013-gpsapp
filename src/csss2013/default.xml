@@ -3,9 +3,11 @@
 <properties version="1.0">
 	<comment>This is the default properties file.</comment>
 	<entry key="app.title">CSSS2013 : GPS App</entry>
-	
+
+
 	<entry key="process.reload.min_distance">5</entry>
-	
-	<entry key="views.dynamic.defaultStyle"></entry>
+
 	<entry key="views.dynamic.tick">50</entry>
+	<entry key="views.dynamic.stylesheet">node {size:15px;}</entry>
+	<entry key="views.static.stylesheet">node {size:10px;} edge {arrow-size:2px,2px;}</entry>
 </properties>

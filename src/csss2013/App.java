@@ -8,6 +8,7 @@ package csss2013;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Properties;
 
+import javax.imageio.ImageIO;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -135,10 +137,15 @@ public class App implements PropertyKeys, Runnable {
 		e.printStackTrace();
 	}
 
-	public static void error(final String message) {
+	public static void error(String message, Object... args) {
+		if (args != null && args.length > 0)
+			message = String.format(message, args);
+
+		final String finalMessage = message;
+
 		Runnable r = new Runnable() {
 			public void run() {
-				JOptionPane.showMessageDialog(null, message, "Error",
+				JOptionPane.showMessageDialog(null, finalMessage, "Error",
 						JOptionPane.ERROR_MESSAGE);
 			}
 		};
@@ -201,7 +208,7 @@ public class App implements PropertyKeys, Runnable {
 
 						Method setSkin = substance.getMethod("setSkin", skin);
 						setSkin.invoke(null, appSkin.newInstance());
-						
+
 						JFrame.setDefaultLookAndFeelDecorated(true);
 						JDialog.setDefaultLookAndFeelDecorated(false);
 					} catch (Exception e) {
@@ -453,6 +460,15 @@ public class App implements PropertyKeys, Runnable {
 		frame.add(tabs);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.pack();
+
+		try {
+			BufferedImage icon = ImageIO.read(App.class
+					.getResourceAsStream("data/icon.png"));
+
+			frame.setIconImage(icon);
+		} catch (IOException e) {
+		}
+
 		frame.setVisible(true);
 	}
 
