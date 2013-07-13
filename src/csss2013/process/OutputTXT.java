@@ -40,7 +40,7 @@ public class OutputTXT implements PropertyKeys, Process {
 			File f = new File(app.getProperty(PROCESS_OUTPUT_TXT_PATH));
 
 			try {
-				f.mkdirs();
+				f.getParentFile().mkdirs();
 			} catch (Exception e) {
 
 			}
