@@ -261,8 +261,25 @@ public class Reload implements Process, PropertyKeys {
 
 					lat += ratio
 							* (stack.next().traceNode.getNumber("lat") - lat);
+
+					if (Double.isNaN(lat)) {
+						System.err
+								.printf("NaN lat (ratio=%f;tlat=%f;lat=%f;date=%d;current=%d;next=%d)\n",
+										ratio,
+										stack.next().traceNode.getNumber("lat"),
+										lat, date, stack.current().time,
+										stack.next().time);
+						System.exit(1);
+					}
+
 					lon += ratio
 							* (stack.next().traceNode.getNumber("lon") - lon);
+
+					if (Double.isNaN(lon)) {
+						System.err.printf("NaN lon (%f;%f;%f)\n", ratio,
+								stack.next().traceNode.getNumber("lon"), lon);
+						System.exit(1);
+					}
 				}
 
 				traceNode.setAttribute("xyz", xyz);
@@ -298,6 +315,20 @@ public class Reload implements Process, PropertyKeys {
 				Edge e = n1.getEdgeBetween(n2);
 
 				double d = Tools.distance(n1, n2);
+
+				if (Double.isNaN(d)) {
+					System.err.printf("NaN distance between %s and %s at %f\n",
+							n1.getId(), n2.getId(), g.getStep());
+
+					double lat1 = n1.getNumber("lat");
+					double lon1 = n1.getNumber("lon");
+					double lat2 = n2.getNumber("lat");
+					double lon2 = n2.getNumber("lon");
+
+					System.err.printf("n1 (%f;%f) n2 (%f;%f)\n", lat1, lon1,
+							lat2, lon2);
+				}
+
 				avg += d;
 				k++;
 				if (e == null) {

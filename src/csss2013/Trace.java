@@ -113,6 +113,25 @@ public class Trace extends AdjacencyListGraph implements PropertyKeys {
 		Node current, next;
 		LinkedList<Node> toDelete = new LinkedList<Node>();
 
+		for (int i = 0; i < getNodeCount(); i++) {
+			Node n = getNode(i);
+
+			double lat = n.getNumber("lat");
+			double lon = n.getNumber("lon");
+
+			if (Double.isNaN(lat)) {
+				System.out.printf("[%s] Latitude is NaN at %d\n", getId(),
+						n.getAttribute("time.ms"));
+				System.exit(1);
+			}
+
+			if (Double.isNaN(lon)) {
+				System.out.printf("[%s] Longitude is NaN at %d\n", getId(),
+						n.getAttribute("time.ms"));
+				System.exit(1);
+			}
+		}
+
 		if (!it.hasNext())
 			return;
 
@@ -132,6 +151,8 @@ public class Trace extends AdjacencyListGraph implements PropertyKeys {
 
 				toDelete.add(next);
 			}
+			
+			current = next;
 		}
 
 		for (int i = 0; i < toDelete.size(); i++)
