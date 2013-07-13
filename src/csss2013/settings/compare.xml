@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties version="1.0">
+	<entry key="app.wizard">false</entry>
+	
+	<entry key="process.reload.checklinks">false</entry>
+	
+	<entry key="settings.traces">team1a,team1b,team2a,team2b,team3a,team3b,team4a,team4b,team5a,team5b,team6a,team6b,team7a,team7b</entry>
+	<entry key="settings.process">normalize,reload,compare</entry>
+	<entry key="settings.views">compare</entry>
+
+	<entry key="settings.process.compare.class">csss2013.process.Compare</entry>
+	<entry key="settings.views.compare.class">csss2013.view.CompareView</entry>
+	
+	<entry key="settings.team1a.name">Team1A</entry>
+	<entry key="settings.team1a.data">Tracks/Team1_A.gpx</entry>
+	<entry key="settings.team1b.name">Team1B</entry>
+	<entry key="settings.team1b.data">Tracks/Team1_B.gpx</entry>
+	
+	<entry key="settings.team2a.name">Team2A</entry>
+	<entry key="settings.team2a.data">Tracks/Team2_A.gpx</entry>
+	<entry key="settings.team2b.name">Team2B</entry>
+	<entry key="settings.team2b.data">Tracks/Team2_B.gpx</entry>
+	
+	<entry key="settings.team3a.name">Team3A</entry>
+	<entry key="settings.team3a.data">Tracks/Team3_A.gpx</entry>
+	<entry key="settings.team3b.name">Team3B</entry>
+	<entry key="settings.team3b.data">Tracks/Team3_B.gpx</entry>
+	
+	<entry key="settings.team4a.name">Team4A</entry>
+	<entry key="settings.team4a.data">Tracks/Team4_A.gpx</entry>
+	<entry key="settings.team4b.name">Team4B</entry>
+	<entry key="settings.team4b.data">Tracks/Team4_B.gpx</entry>
+	
+	<entry key="settings.team5a.name">Team5A</entry>
+	<entry key="settings.team5a.data">Tracks/Team5_A.gpx</entry>
+	<entry key="settings.team5b.name">Team5B</entry>
+	<entry key="settings.team5b.data">Tracks/Team5_B.gpx</entry>
+	
+	<entry key="settings.team6a.name">Team6A</entry>
+	<entry key="settings.team6a.data">Tracks/Team6_A.gpx</entry>
+	<entry key="settings.team6b.name">Team6B</entry>
+	<entry key="settings.team6b.data">Tracks/Team6_B.gpx</entry>
+	
+	<entry key="settings.team7a.name">Team7A</entry>
+	<entry key="settings.team7a.data">Tracks/Team7_A.gpx</entry>
+	<entry key="settings.team7b.name">Team7B</entry>
+	<entry key="settings.team7b.data">Tracks/Team7_B.gpx</entry>
+	
+	<entry key="settings.process.compare.what">t1,t2,t3,t4,t5,t6,t7</entry>
+	<entry key="settings.process.compare.t1.node0">Team1A</entry>
+	<entry key="settings.process.compare.t1.node1">Team1B</entry>
+	<entry key="settings.process.compare.t2.node0">Team2A</entry>
+	<entry key="settings.process.compare.t2.node1">Team2B</entry>
+	<entry key="settings.process.compare.t3.node0">Team3A</entry>
+	<entry key="settings.process.compare.t3.node1">Team3B</entry>
+	<entry key="settings.process.compare.t4.node0">Team4A</entry>
+	<entry key="settings.process.compare.t4.node1">Team4B</entry>
+	<entry key="settings.process.compare.t5.node0">Team5A</entry>
+	<entry key="settings.process.compare.t5.node1">Team5B</entry>
+	<entry key="settings.process.compare.t6.node0">Team6A</entry>
+	<entry key="settings.process.compare.t6.node1">Team6B</entry>
+	<entry key="settings.process.compare.t7.node0">Team7A</entry>
+	<entry key="settings.process.compare.t7.node1">Team7B</entry>
+</properties>

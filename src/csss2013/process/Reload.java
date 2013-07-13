@@ -76,6 +76,8 @@ public class Reload implements Process, PropertyKeys {
 	 */
 	double minDistance = 5;
 
+	boolean checkLinks = true;
+
 	public Reload() {
 		stacks = new HashMap<Trace, EntryStack>();
 		stylesheet = "node {size:15px;} node.anchor {size:1px;}";
@@ -99,6 +101,7 @@ public class Reload implements Process, PropertyKeys {
 		Graph g = new AdjacencyListGraph("reload");
 		Timeline timeline = new Timeline();
 
+		checkLinks = app.getPropertyAsBoolean(PROCESS_RELOAD_CHECKLINKS, true);
 		minDistance = app.getPropertyAsDouble(PROCESS_RELOAD_MIN_DISTANCE, 5);
 		stylesheet = app.getProperty(VIEWS_DYNAMIC_STYLESHEET,
 				"node {size:15px;}");
@@ -282,8 +285,9 @@ public class Reload implements Process, PropertyKeys {
 				traceNode.setAttribute("lon", lon);
 			}
 
-			checkLinks(g);
-			
+			if (checkLinks)
+				checkLinks(g);
+
 			current.position++;
 		}
 	}

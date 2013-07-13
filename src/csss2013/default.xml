@@ -8,6 +8,7 @@
 	<entry key="trace.time.round">true</entry>
 
 	<entry key="process.reload.min_distance">40</entry>
+	<entry key="process.reload.checklinks">true</entry>
 
 	<entry key="views.dynamic.tick">10</entry>
 	<entry key="views.dynamic.stylesheet">node {size:15px;}</entry>
