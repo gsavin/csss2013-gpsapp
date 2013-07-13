@@ -327,19 +327,20 @@ public class Reload implements Process, PropertyKeys {
 
 					System.err.printf("n1 (%f;%f) n2 (%f;%f)\n", lat1, lon1,
 							lat2, lon2);
-				}
-
-				avg += d;
-				k++;
-				if (e == null) {
-					if (d <= minDistance) {
-						e = g.addEdge(n1.getId() + "__" + n2.getId(), n1, n2);
+				} else {
+					avg += d;
+					k++;
+					if (e == null) {
+						if (d <= minDistance) {
+							e = g.addEdge(n1.getId() + "__" + n2.getId(), n1,
+									n2);
+							e.setAttribute("distance", d);
+						}
+					} else if (d > minDistance)
+						g.removeEdge(e);
+					else
 						e.setAttribute("distance", d);
-					}
-				} else if (d > minDistance)
-					g.removeEdge(e);
-				else
-					e.setAttribute("distance", d);
+				}
 			}
 		}
 

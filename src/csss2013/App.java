@@ -38,6 +38,7 @@ import javax.swing.SwingUtilities;
 import csss2013.annotation.Default;
 import csss2013.annotation.Title;
 import csss2013.process.Merge;
+import csss2013.process.NetLogoProcess;
 import csss2013.process.NormalizeXYZ;
 import csss2013.process.Reload;
 import csss2013.util.Palette;
@@ -238,6 +239,7 @@ public class App implements PropertyKeys, Runnable {
 		App.registerProcess("normalize", NormalizeXYZ.class);
 		App.registerProcess("reload", Reload.class);
 		App.registerProcess("merge", Merge.class);
+		App.registerProcess("netlogo", NetLogoProcess.class);
 
 		defaultProperties = new Properties();
 
@@ -314,6 +316,9 @@ public class App implements PropertyKeys, Runnable {
 			String[] process = proc.split("\\s*,\\s*");
 
 			for (String p : process) {
+				if (p.length() == 0)
+					continue;
+
 				String tryClass = getProperty(String.format(
 						"settings.process.%s.class", p));
 
@@ -341,6 +346,9 @@ public class App implements PropertyKeys, Runnable {
 			String[] views = vs.split("\\s*,\\s*");
 
 			for (String v : views) {
+				if (v.length() == 0)
+					continue;
+
 				String tryClass = getProperty(String.format(
 						"settings.views.%s.class", v));
 
@@ -364,6 +372,10 @@ public class App implements PropertyKeys, Runnable {
 
 	public Properties getProperties() {
 		return properties;
+	}
+
+	public boolean hasProperty(String key) {
+		return properties.getProperty(key) != null;
 	}
 
 	public String getProperty(String key) {
@@ -537,10 +549,28 @@ public class App implements PropertyKeys, Runnable {
 	protected void processTerminated() {
 		Runnable r = new Runnable() {
 			public void run() {
-				showViews();
-
 				progressDialog.setVisible(false);
 				progressDialog = null;
+			}
+		};
+
+		if (SwingUtilities.isEventDispatchThread())
+			r.run();
+		else
+			try {
+				SwingUtilities.invokeAndWait(r);
+			} catch (InterruptedException e) {
+			} catch (InvocationTargetException e) {
+				e.printStackTrace();
+			}
+		
+		if (views.size() == 0) {
+			System.exit(0);
+		}
+
+		r = new Runnable() {
+			public void run() {
+				showViews();
 			}
 		};
 

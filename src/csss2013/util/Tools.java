@@ -40,6 +40,9 @@ public class Tools {
 
 	public static double orthodromie(double lat1, double lon1, double lat2,
 			double lon2) {
+		if (lat1 == lat2 && lon1 == lon2)
+			return 0;
+
 		lon1 = Math.toRadians(lon1);
 		lon2 = Math.toRadians(lon2);
 		lat1 = Math.toRadians(lat1);
