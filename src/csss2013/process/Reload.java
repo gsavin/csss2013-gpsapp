@@ -138,7 +138,7 @@ public class Reload implements Process, PropertyKeys {
 		stack.trace = trace;
 		stacks.put(trace, stack);
 
-		stylesheet += String.format(" node#%s {fill-color:%s;%s}",
+		stylesheet += String.format(" node#\"%s\" {fill-color:%s;%s}",
 				trace.getId(), trace.getColor(), trace.getCustomStyle());
 
 		for (int i = 0; i < trace.getNodeCount(); i++) {
@@ -203,11 +203,6 @@ public class Reload implements Process, PropertyKeys {
 	}
 
 	protected void reload(Graph g) {
-		double min, max, avg;
-		int count = 0;
-		min = Double.MAX_VALUE;
-		max = Double.MIN_VALUE;
-		avg = 0;
 		reset();
 
 		g.addAttribute("ui.stylesheet", stylesheet);
@@ -287,26 +282,13 @@ public class Reload implements Process, PropertyKeys {
 				traceNode.setAttribute("lon", lon);
 			}
 
-			double d = checkLinks(g);
-
-			min = Math.min(d, min);
-			max = Math.max(d, max);
-			avg += d;
-			count++;
-
+			checkLinks(g);
+			
 			current.position++;
 		}
-
-		avg /= count;
-
-		System.out.printf("Min average distance     : %f\n", min);
-		System.out.printf("Average average distance : %f\n", avg);
-		System.out.printf("Min average distance     : %f\n", max);
 	}
 
-	protected double checkLinks(Graph g) {
-		double avg = 0;
-		int k = 0;
+	protected void checkLinks(Graph g) {
 		for (int i = 0; i < g.getNodeCount() - 1; i++) {
 			Node n1 = g.getNode(i);
 
@@ -328,8 +310,6 @@ public class Reload implements Process, PropertyKeys {
 					System.err.printf("n1 (%f;%f) n2 (%f;%f)\n", lat1, lon1,
 							lat2, lon2);
 				} else {
-					avg += d;
-					k++;
 					if (e == null) {
 						if (d <= minDistance) {
 							e = g.addEdge(n1.getId() + "__" + n2.getId(), n1,
@@ -343,8 +323,6 @@ public class Reload implements Process, PropertyKeys {
 				}
 			}
 		}
-
-		return avg / (double) k;
 	}
 
 }

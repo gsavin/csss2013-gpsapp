@@ -106,8 +106,7 @@ public class NormalizeXYZ implements Process {
 		double cLon, cLat;
 		cLon = (minLon + maxLon) / 2.0;
 		cLat = (minLat + maxLat) / 2.0;
-
-		System.out.printf("Center (%f;%f)\n", cLon, cLat);
+		
 		for (int i = 0; i < app.getTraceCount(); i++) {
 			Trace t = app.getTrace(i);
 

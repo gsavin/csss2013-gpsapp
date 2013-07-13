@@ -200,7 +200,8 @@ public class Trace extends AdjacencyListGraph implements PropertyKeys {
 	}
 
 	public void setCustomStyle(String style) {
-		this.customStyle = style;
+		if (style != null)
+			this.customStyle = style;
 	}
 
 	public String getCustomStyle() {

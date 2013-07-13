@@ -41,7 +41,7 @@ public class Merge implements Process, PropertyKeys {
 			String traceStyle = String.format("fill-color:%s;%s",
 					trace.getColor(), trace.getCustomStyle());
 
-			stylesheet += String.format(" node.%s {%s} edge.%s {%s}",
+			stylesheet += String.format(" node.\"%s\" {%s} edge.\"%s\" {%s}",
 					trace.getId(), traceStyle, trace.getId(), traceStyle);
 
 			for (int i = 0; i < trace.getNodeCount(); i++) {

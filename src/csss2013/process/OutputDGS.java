@@ -13,7 +13,7 @@ import csss2013.Process;
 import csss2013.PropertyKeys;
 import csss2013.annotation.Title;
 
-@Title("TXT Output")
+@Title("DGS Output")
 public class OutputDGS implements PropertyKeys, Process {
 	/*
 	 * (non-Javadoc)

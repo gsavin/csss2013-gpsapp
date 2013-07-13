@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties version="1.0">
+	<entry key="app.wizard">false</entry>
+	
+	<entry key="settings.traces">team1,team2,team3,team4,team5,team6,team7</entry>
+	<entry key="settings.process">normalize,reload,merge</entry>
+	<entry key="settings.views">static,dynamic</entry>
+
+	<entry key="settings.process.output_dgs.class">csss2013.process.OutputDGS</entry>
+	
+	<entry key="settings.team1.name">Team 1</entry>
+	<entry key="settings.team1.data">Tracks/Team1_A.gpx</entry>
+	
+	<entry key="settings.team2.name">Team 2</entry>
+	<entry key="settings.team2.data">Tracks/Team2_A.gpx</entry>
+	
+	<entry key="settings.team3.name">Team 3</entry>
+	<entry key="settings.team3.data">Tracks/Team3_A.gpx</entry>
+	
+	<entry key="settings.team4.name">Team 4</entry>
+	<entry key="settings.team4.data">Tracks/Team4_A.gpx</entry>
+	
+	<entry key="settings.team5.name">Team 5</entry>
+	<entry key="settings.team5.data">Tracks/Team5_A.gpx</entry>
+	
+	<entry key="settings.team6.name">Team 6</entry>
+	<entry key="settings.team6.data">Tracks/Team6_A.gpx</entry>
+	
+	<entry key="settings.team7.name">Team 7</entry>
+	<entry key="settings.team7.data">Tracks/Team7_A.gpx</entry>
+</properties>
