@@ -4,7 +4,6 @@
 	<entry key="app.wizard">false</entry>
 	
 	<entry key="process.reload.checklinks">false</entry>
-	
 	<entry key="settings.traces">team1a,team1b,team2a,team2b,team3a,team3b,team4a,team4b,team5a,team5b,team6a,team6b,team7a,team7b</entry>
 	<entry key="settings.process">normalize,reload,compare</entry>
 	<entry key="settings.views">compare</entry>
