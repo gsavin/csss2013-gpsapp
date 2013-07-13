@@ -15,8 +15,8 @@ import csss2013.Process;
 import csss2013.PropertyKeys;
 import csss2013.annotation.Title;
 
-@Title("NetLogo")
-public class NetLogoProcess implements PropertyKeys, Process {
+@Title("TXT Output")
+public class OutputTXT implements PropertyKeys, Process {
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -36,8 +36,8 @@ public class NetLogoProcess implements PropertyKeys, Process {
 		Graph g = new AdjacencyListGraph("g");
 		PrintStream out = System.out;
 
-		if (app.hasProperty(PROCESS_NETLOGO_OUTPUT)) {
-			File f = new File(app.getProperty(PROCESS_NETLOGO_OUTPUT));
+		if (app.hasProperty(PROCESS_OUTPUT_TXT_PATH)) {
+			File f = new File(app.getProperty(PROCESS_OUTPUT_TXT_PATH));
 
 			try {
 				f.mkdirs();

@@ -5,10 +5,10 @@
 	<entry key="app.title">Voileux</entry>
 	
 	<entry key="settings.traces">team1,team2,team3,team4,team5,team6,team7</entry>
-	<entry key="settings.process">normalize,reload,netlogo</entry>
+	<entry key="settings.process">normalize,reload,output_txt</entry>
 	<entry key="settings.views"></entry>
 
-	<entry key="settings.process.netlogo.class">csss2013.process.NetLogoProcess</entry>
+	<entry key="settings.process.output_txt.class">csss2013.process.OutputTXT</entry>
 	
 	<entry key="settings.team1.name">Team 1</entry>
 	<entry key="settings.team1.data">Tracks/Team1_A.gpx</entry>
@@ -31,5 +31,5 @@
 	<entry key="settings.team7.name">Team 7</entry>
 	<entry key="settings.team7.data">Tracks/Team7_A.gpx</entry>
 	
-	<entry key="process.netlogo.output">export/teams_netlogo.txt</entry>
+	<entry key="process.output_txt.path">export/output.txt</entry>
 </properties>

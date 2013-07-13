@@ -8,7 +8,7 @@ public interface PropertyKeys {
 
 	public static final String PROCESS_RELOAD_MIN_DISTANCE = "process.reload.min_distance";
 
-	public static final String PROCESS_NETLOGO_OUTPUT = "process.netlogo.output";
+	public static final String PROCESS_OUTPUT_TXT_PATH = "process.output_txt.path";
 
 	public static final String VIEWS_DYNAMIC_STYLESHEET = "views.dynamic.stylesheet";
 	public static final String VIEWS_DYNAMIC_TICKS = "views.dynamic.tick";

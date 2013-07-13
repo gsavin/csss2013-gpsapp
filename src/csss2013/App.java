@@ -38,7 +38,7 @@ import javax.swing.SwingUtilities;
 import csss2013.annotation.Default;
 import csss2013.annotation.Title;
 import csss2013.process.Merge;
-import csss2013.process.NetLogoProcess;
+import csss2013.process.OutputTXT;
 import csss2013.process.NormalizeXYZ;
 import csss2013.process.Reload;
 import csss2013.util.Palette;
@@ -239,7 +239,7 @@ public class App implements PropertyKeys, Runnable {
 		App.registerProcess("normalize", NormalizeXYZ.class);
 		App.registerProcess("reload", Reload.class);
 		App.registerProcess("merge", Merge.class);
-		App.registerProcess("netlogo", NetLogoProcess.class);
+		App.registerProcess("netlogo", OutputTXT.class);
 
 		defaultProperties = new Properties();
 
