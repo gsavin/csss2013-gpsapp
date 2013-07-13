@@ -175,9 +175,18 @@ public class App implements PropertyKeys, Runnable {
 				in = App.class.getResourceAsStream(ressourceName);
 		}
 
-		if (in != null)
-			return loadProperties(in);
-
+		if (in != null) {
+			Properties p = loadProperties(in);
+			
+			try {
+				in.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			return p;
+		}
+		
 		return null;
 	}
 
@@ -253,19 +262,27 @@ public class App implements PropertyKeys, Runnable {
 	protected final HashMap<String, Object> data;
 	protected JFrame progressDialog;
 	protected Properties properties;
+	protected String settings;
 
-	public App() {
+	public App(String... args) {
 		this.traces = null;
 		this.process = new LinkedList<Process>();
 		this.views = new LinkedList<String>();
 		this.data = new HashMap<String, Object>();
 		this.properties = defaultProperties;
+		this.settings = null;
+		
+		processArgs(args);
 	}
 
 	public void run() {
 		SettingsWizard.launch(this);
 	}
 
+	public String getSettings() {
+		return settings;
+	}
+	
 	public int getTraceCount() {
 		return traces == null ? 0 : traces.length;
 	}
@@ -409,6 +426,20 @@ public class App implements PropertyKeys, Runnable {
 		launchProcess();
 	}
 
+	protected void processArgs(String... args) {
+		if (args == null)
+			return;
+		
+		for (String arg : args) {
+			if (arg.matches("^--settings=.*")) {
+				settings = arg.substring(11);
+
+				if (settings.charAt(0) == '"')
+					settings = settings.substring(1, settings.length() - 1);
+			}
+		}
+	}
+
 	protected void processTerminated() {
 		Runnable r = new Runnable() {
 			public void run() {
@@ -493,7 +524,7 @@ public class App implements PropertyKeys, Runnable {
 	}
 
 	public static void main(String... args) {
-		App app = new App();
+		App app = new App(args);
 		SwingUtilities.invokeLater(app);
 	}
 }

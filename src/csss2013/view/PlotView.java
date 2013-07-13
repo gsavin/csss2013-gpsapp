@@ -57,6 +57,10 @@ public abstract class PlotView implements TraceView {
 			this.type = PlotType.LINE;
 		}
 
+		public void setDataNames(String... dataNames) {
+			this.dataNames = dataNames;
+		}
+
 		protected JFreeChart getChart(App app) {
 			JFreeChart chart;
 			XYSeriesCollection dataset = new XYSeriesCollection();

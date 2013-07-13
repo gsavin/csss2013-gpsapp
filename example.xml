@@ -2,9 +2,12 @@
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties version="1.0">
 	<entry key="settings.traces">benj,boris,norman,ramses</entry>
-	<entry key="settings.process">normalize,reload,merge</entry>
-	<entry key="settings.views">static,dynamic</entry>
+	<entry key="settings.process">normalize,reload,merge,example</entry>
+	<entry key="settings.views">static,dynamic,example</entry>
 
+	<entry key="settings.process.example.class">csss2013.process.ExampleProcess</entry>
+	<entry key="settings.views.example.class">csss2013.view.ExampleView</entry>
+	
 	<entry key="settings.benj.name">Benj</entry>
 	<entry key="settings.benj.data">data/Benj.gpx</entry>
 	<entry key="settings.benj.style"></entry>

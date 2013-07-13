@@ -2,12 +2,14 @@ package csss2013.view;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.util.LinkedList;
 
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import csss2013.App;
+import csss2013.Trace;
 import csss2013.TraceView;
 import csss2013.annotation.Title;
 import csss2013.process.ExampleProcess;
@@ -16,7 +18,7 @@ import csss2013.process.ExampleProcess;
 public class ExampleView extends PlotView.PlotSeriesView implements TraceView {
 	public ExampleView() {
 		super("Average speed", ExampleProcess.SPEED_SERIES_DATA_NAME);
-		
+
 		this.xAxisLabel = "time in seconds";
 		this.yAxisLabel = "speed in km / h";
 		this.showLegend = false;
@@ -29,28 +31,41 @@ public class ExampleView extends PlotView.PlotSeriesView implements TraceView {
 	 */
 	public JComponent build(App app) {
 		double distance, time, speed;
-
-		//
-		// We get data back :
-		//
-		distance = (Double) app.getData(ExampleProcess.DISTANCE_DATA_NAME);
-		time = (Double) app.getData(ExampleProcess.TIME_DATA_NAME);
-		speed = (Double) app.getData(ExampleProcess.SPEED_DATA_NAME);
+		LinkedList<String> series = new LinkedList<String>();
 
 		//
 		// Build the view :
 		//
 		JPanel globalInfos = new JPanel();
-		globalInfos.setLayout(new GridLayout(3, 2));
+		globalInfos.setLayout(new GridLayout(app.getTraceCount() + 1, 4));
 
-		globalInfos.add(new JLabel("Distance :"));
-		globalInfos.add(new JLabel(String.format("%.2fm", distance)));
+		globalInfos.add(new JLabel("Trace"));
+		globalInfos.add(new JLabel("Distance"));
+		globalInfos.add(new JLabel("Time"));
+		globalInfos.add(new JLabel("Average speed"));
 
-		globalInfos.add(new JLabel("Time :"));
-		globalInfos.add(new JLabel(String.format("%.0fs", time)));
+		for (int i = 0; i < app.getTraceCount(); i++) {
+			Trace t = app.getTrace(i);
 
-		globalInfos.add(new JLabel("Average speed :"));
-		globalInfos.add(new JLabel(String.format("%.2fkm/h", speed)));
+			//
+			// We get data back :
+			//
+			distance = (Double) app.getData(ExampleProcess.DISTANCE_DATA_NAME
+					+ t.getId());
+			time = (Double) app.getData(ExampleProcess.TIME_DATA_NAME
+					+ t.getId());
+			speed = (Double) app.getData(ExampleProcess.SPEED_DATA_NAME
+					+ t.getId());
+
+			series.add(ExampleProcess.SPEED_SERIES_DATA_NAME + t.getId());
+
+			globalInfos.add(new JLabel(t.getId()));
+			globalInfos.add(new JLabel(String.format("%.2fm", distance)));
+			globalInfos.add(new JLabel(String.format("%.0fs", time)));
+			globalInfos.add(new JLabel(String.format("%.2fkm/h", speed)));
+		}
+
+		setDataNames(series.toArray(new String[app.getTraceCount()]));
 
 		JPanel container = new JPanel();
 		container.setLayout(new BorderLayout());

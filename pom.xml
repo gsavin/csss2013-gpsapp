@@ -99,11 +99,13 @@
 
 		<resources>
 			<!-- Resources other than classes are included here. -->
-			<!-- 
 			<resource>
 				<directory>src</directory>
+				<includes>
+				    <include>**/*.xml</include>
+				    <include>**/*.png</include>
+				</includes>
 			</resource>
-			-->
 		</resources>
 
 		<testResources>

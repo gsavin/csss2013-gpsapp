@@ -66,6 +66,15 @@ public class ExampleProcess implements Process {
 				long t2 = Tools.getTime(next);
 				double d = Tools.distance(current, next);
 
+				if (Double.isNaN(d)) {
+					System.err.printf(
+							"[Trace|%s] distance is NaN between %s and %s\n",
+							trace.getId(), Tools.getCalendarTime(current)
+									.getTime(), Tools.getCalendarTime(next)
+									.getTime());
+					continue;
+				}
+
 				distance += d;
 				currentDistance += d;
 				time += (t2 - t1) / 1000.0;
@@ -86,11 +95,13 @@ public class ExampleProcess implements Process {
 
 			double speed = (distance / 1000.0) / (time / 3600.0);
 
-			app.setData(DISTANCE_DATA_NAME, distance);
-			app.setData(TIME_DATA_NAME, time);
-			app.setData(SPEED_DATA_NAME, speed);
-			app.setData(SPEED_SERIES_DATA_NAME, series.toArray());
-			app.setData(SPEED_SERIES_DATA_NAME + ".title", "speed");
+			app.setData(DISTANCE_DATA_NAME + trace.getId(), distance);
+			app.setData(TIME_DATA_NAME + trace.getId(), time);
+			app.setData(SPEED_DATA_NAME + trace.getId(), speed);
+			app.setData(SPEED_SERIES_DATA_NAME + trace.getId(),
+					series.toArray());
+			app.setData(SPEED_SERIES_DATA_NAME + trace.getId() + ".title",
+					trace.getId() + " speed");
 		}
 	}
 }
