@@ -31,5 +31,5 @@
 	<entry key="settings.team7.name">Team 7</entry>
 	<entry key="settings.team7.data">Tracks/Team7_A.gpx</entry>
 	
-	<entry key="process.netlogo.output">teams_netlogo.txt</entry>
+	<entry key="process.netlogo.output">export/teams_netlogo.txt</entry>
 </properties>

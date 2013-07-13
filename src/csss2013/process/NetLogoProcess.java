@@ -1,5 +1,6 @@
 package csss2013.process;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.Locale;
@@ -36,8 +37,16 @@ public class NetLogoProcess implements PropertyKeys, Process {
 		PrintStream out = System.out;
 
 		if (app.hasProperty(PROCESS_NETLOGO_OUTPUT)) {
+			File f = new File(app.getProperty(PROCESS_NETLOGO_OUTPUT));
+
 			try {
-				out = new PrintStream(app.getProperty(PROCESS_NETLOGO_OUTPUT));
+				f.mkdirs();
+			} catch (Exception e) {
+
+			}
+
+			try {
+				out = new PrintStream(f);
 			} catch (FileNotFoundException e) {
 				App.error(e);
 				return;
