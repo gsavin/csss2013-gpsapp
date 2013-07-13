@@ -161,6 +161,7 @@ public class App implements PropertyKeys, Runnable {
 			}
 	}
 
+	@SuppressWarnings("resource")
 	public static Properties loadProperties(String ressourceName)
 			throws FileNotFoundException {
 		File f = new File(ressourceName);
@@ -177,16 +178,16 @@ public class App implements PropertyKeys, Runnable {
 
 		if (in != null) {
 			Properties p = loadProperties(in);
-			
+
 			try {
 				in.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			
+
 			return p;
 		}
-		
+
 		return null;
 	}
 
@@ -271,7 +272,7 @@ public class App implements PropertyKeys, Runnable {
 		this.data = new HashMap<String, Object>();
 		this.properties = defaultProperties;
 		this.settings = null;
-		
+
 		processArgs(args);
 	}
 
@@ -282,7 +283,7 @@ public class App implements PropertyKeys, Runnable {
 	public String getSettings() {
 		return settings;
 	}
-	
+
 	public int getTraceCount() {
 		return traces == null ? 0 : traces.length;
 	}
@@ -362,6 +363,24 @@ public class App implements PropertyKeys, Runnable {
 		}
 	}
 
+	public boolean getPropertyAsBoolean(String key) {
+		return getPropertyAsBoolean(key, true);
+	}
+
+	public boolean getPropertyAsBoolean(String key, boolean def) {
+		String v = getProperty(key);
+
+		if (v == null)
+			return def;
+
+		try {
+			return Boolean.parseBoolean(v);
+		} catch (NumberFormatException e) {
+			App.error(e);
+			return def;
+		}
+	}
+
 	protected JComponent buildView(String name) {
 		if (!registeredViews.containsKey(name)) {
 			App.error("View " + name + " is not registered");
@@ -405,7 +424,7 @@ public class App implements PropertyKeys, Runnable {
 
 		for (Settings.TraceEntry e : settings) {
 			try {
-				Trace t = Trace.load(e.name, e.data);
+				Trace t = Trace.load(this, e.name, e.data);
 				t.setColor(e.color);
 				t.setCustomStyle(e.style);
 
@@ -429,7 +448,7 @@ public class App implements PropertyKeys, Runnable {
 	protected void processArgs(String... args) {
 		if (args == null)
 			return;
-		
+
 		for (String arg : args) {
 			if (arg.matches("^--settings=.*")) {
 				settings = arg.substring(11);

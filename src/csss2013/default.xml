@@ -4,6 +4,7 @@
 	<comment>This is the default properties file.</comment>
 	<entry key="app.title">CSSS2013 : GPS App</entry>
 
+	<entry key="trace.time.round">true</entry>
 
 	<entry key="process.reload.min_distance">40</entry>
 
