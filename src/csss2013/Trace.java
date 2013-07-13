@@ -10,49 +10,62 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Iterator;
+import java.util.LinkedList;
 
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.file.FileSourceGPX;
 import org.graphstream.ui.swingViewer.Viewer;
+import org.graphstream.util.time.ISODateIO;
 
-public class Trace extends AdjacencyListGraph {
+import csss2013.util.Tools;
+
+public class Trace extends AdjacencyListGraph implements PropertyKeys {
 	public static final boolean HIGH_QUALITY_RENDERING = true;
 
-	public static Trace load(String name, File file) throws IOException {
+	public static Trace load(App app, String name, File file)
+			throws IOException {
 		if (file.exists()) {
 			FileInputStream in = new FileInputStream(file);
 
-			Trace t = load(name, in);
+			Trace t = load(app, name, in);
 			in.close();
 
 			return t;
 		} else
-			return load(name, file.getPath());
+			return load(app, name, file.getPath());
 	}
 
-	public static Trace load(String name, InputStream data) throws IOException {
+	public static Trace load(App app, String name, InputStream data)
+			throws IOException {
 		if (data == null) {
 			System.err.printf("Data is null !\n");
 			return null;
 		}
 
-		Trace t = new Trace(name);
+		boolean timeRound = app.getPropertyAsBoolean(TRACE_TIME_ROUND);
+
+		Trace t = new Trace(name, timeRound);
 		FileSourceGPX gpx = new FileSourceGPX();
 
 		gpx.addSink(t);
 		gpx.readAll(data);
 		gpx.removeSink(t);
 
+		t.check();
+
 		return t;
 	}
 
-	public static Trace load(String name, String resource) throws IOException {
+	public static Trace load(App app, String name, String resource)
+			throws IOException {
 		File f = new File(resource);
 
 		if (f.exists())
-			return load(name, f);
+			return load(app, name, f);
 
 		InputStream in = ClassLoader.getSystemResourceAsStream(resource);
 
@@ -62,22 +75,80 @@ public class Trace extends AdjacencyListGraph {
 		if (in == null)
 			return null;
 
-		Trace t = load(name, in);
+		Trace t = load(app, name, in);
 		in.close();
 
 		return t;
 	}
 
+	static ISODateIO dateScanner = null, dateScannerNoMS = null;
+
+	static {
+		try {
+			dateScanner = new ISODateIO("%FT%T.%k%z");
+			dateScannerNoMS = new ISODateIO("%FT%T%z");
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
 	protected String color = "#222222";
 	protected String customStyle = "";
 
-	protected Trace(String id) {
+	protected boolean roundTime;
+
+	protected Trace(String id, boolean roundTime) {
 		super(id);
+
+		this.roundTime = roundTime;
 
 		if (HIGH_QUALITY_RENDERING) {
 			addAttribute("ui.quality");
 			addAttribute("ui.antialias");
 		}
+	}
+
+	protected void check() {
+		Iterator<Node> it = getTracePath();
+		Node current, next;
+		LinkedList<Node> toDelete = new LinkedList<Node>();
+
+		if (!it.hasNext())
+			return;
+
+		current = it.next();
+
+		while (it.hasNext()) {
+			next = it.next();
+
+			if (Tools.getTime(current) == Tools.getTime(next)) {
+				double d = Tools.distance(current, next);
+
+				if (d > 1) {
+					System.err.printf(
+							"[WARNING] there are two points with same "
+									+ "timestamp but distance is %fm\n", d);
+				}
+
+				toDelete.add(next);
+			}
+		}
+
+		for (int i = 0; i < toDelete.size(); i++)
+			deleteAndMerge(toDelete.get(i));
+	}
+
+	protected void deleteAndMerge(Node n) {
+		if (n.getDegree() == 2) {
+			Node a, b;
+
+			b = n.getLeavingEdge(0).getOpposite(n);
+			a = n.getEnteringEdge(0).getOpposite(n);
+
+			addEdge(a.getId() + "__" + b.getId(), a, b, true);
+		}
+
+		removeNode(n);
 	}
 
 	public void setColor(String color) {
@@ -96,13 +167,74 @@ public class Trace extends AdjacencyListGraph {
 		return customStyle;
 	}
 
+	public Iterator<Node> getTracePath() {
+		return new Path();
+	}
+
+	protected void checkTime(String nodeId) {
+		Node n = getNode(nodeId);
+		String time = n.getAttribute("time");
+		Calendar c = dateScanner.parse(time);
+
+		if (c == null)
+			c = dateScannerNoMS.parse(time);
+
+		int ms = c.get(Calendar.MILLISECOND);
+
+		if (ms != 0 && roundTime) {
+			if (ms > 500)
+				c.set(Calendar.SECOND, c.get(Calendar.SECOND + 1));
+
+			c.set(Calendar.MILLISECOND, 0);
+		}
+
+		n.setAttribute("time.calendar", c);
+		n.setAttribute("time.ms", c.getTime().getTime());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.graph.implementations.AbstractGraph#display()
+	 */
 	@Override
 	public Viewer display() {
 		return display(false);
 	}
 
-	public Iterator<Node> getTracePath() {
-		return new Path();
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.graph.implementations.AbstractGraph#nodeAttributeAdded
+	 * (java.lang.String, long, java.lang.String, java.lang.String,
+	 * java.lang.Object)
+	 */
+	@Override
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId,
+			String attribute, Object value) {
+		super.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);
+
+		if (attribute.equals("time"))
+			checkTime(nodeId);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.graph.implementations.AbstractGraph#nodeAttributeChanged
+	 * (java.lang.String, long, java.lang.String, java.lang.String,
+	 * java.lang.Object, java.lang.Object)
+	 */
+	@Override
+	public void nodeAttributeChanged(String sourceId, long timeId,
+			String nodeId, String attribute, Object oldValue, Object newValue) {
+		super.nodeAttributeChanged(sourceId, timeId, nodeId, attribute,
+				oldValue, newValue);
+
+		if (attribute.equals("time"))
+			checkTime(nodeId);
 	}
 
 	class Path implements Iterator<Node> {

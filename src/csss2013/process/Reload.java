@@ -6,7 +6,6 @@
  */
 package csss2013.process;
 
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,7 +16,6 @@ import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
 import org.graphstream.stream.Timeline;
-import org.graphstream.util.time.ISODateIO;
 
 import csss2013.App;
 import csss2013.Process;
@@ -136,32 +134,19 @@ public class Reload implements Process, PropertyKeys {
 	}
 
 	protected void load(Trace trace) {
-		ISODateIO dateScanner = null, dateScannerNoMS = null;
 		EntryStack stack = new EntryStack();
 		stack.trace = trace;
 		stacks.put(trace, stack);
-
-		try {
-			dateScanner = new ISODateIO("%FT%T.%k%z");
-			dateScannerNoMS = new ISODateIO("%FT%T%z");
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
 
 		stylesheet += String.format(" node#%s {fill-color:%s;%s}",
 				trace.getId(), trace.getColor(), trace.getCustomStyle());
 
 		for (int i = 0; i < trace.getNodeCount(); i++) {
 			Node n = trace.getNode(i);
-			String time = n.getAttribute("time");
-			Calendar c = dateScanner.parse(time);
-
-			if (c == null)
-				c = dateScannerNoMS.parse(time);
 
 			Entry e = new Entry();
-			e.time = c.getTime().getTime();
-			e.cal = c;
+			e.time = Tools.getTime(n);
+			e.cal = Tools.getCalendarTime(n);
 			e.traceNode = n;
 			e.trace = trace;
 
@@ -286,17 +271,17 @@ public class Reload implements Process, PropertyKeys {
 			}
 
 			double d = checkLinks(g);
-			
+
 			min = Math.min(d, min);
 			max = Math.max(d, max);
 			avg += d;
 			count++;
-			
+
 			current.position++;
 		}
-		
+
 		avg /= count;
-		
+
 		System.out.printf("Min average distance     : %f\n", min);
 		System.out.printf("Average average distance : %f\n", avg);
 		System.out.printf("Min average distance     : %f\n", max);
@@ -317,7 +302,6 @@ public class Reload implements Process, PropertyKeys {
 				k++;
 				if (e == null) {
 					if (d <= minDistance) {
-						System.out.printf("add edge\n");
 						e = g.addEdge(n1.getId() + "__" + n2.getId(), n1, n2);
 						e.setAttribute("distance", d);
 					}
@@ -327,7 +311,7 @@ public class Reload implements Process, PropertyKeys {
 					e.setAttribute("distance", d);
 			}
 		}
-		
+
 		return avg / (double) k;
 	}
 
