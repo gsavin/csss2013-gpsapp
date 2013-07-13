@@ -92,6 +92,25 @@ public class Trace extends AdjacencyListGraph implements PropertyKeys {
 		}
 	}
 
+	public static void main(String... args) {
+		String time = "2013-07-11T17:09:15.737Z";
+		Calendar c = dateScanner.parse(time);
+
+		if (c == null)
+			c = dateScannerNoMS.parse(time);
+
+		int ms = c.get(Calendar.MILLISECOND);
+
+		System.out.println(c.getTime());
+
+		if (ms > 500)
+			c.set(Calendar.SECOND, c.get(Calendar.SECOND) + 1);
+
+		c.set(Calendar.MILLISECOND, 0);
+
+		System.out.println(c.getTime());
+	}
+
 	protected String color = "#222222";
 	protected String customStyle = "";
 
@@ -151,7 +170,7 @@ public class Trace extends AdjacencyListGraph implements PropertyKeys {
 
 				toDelete.add(next);
 			}
-			
+
 			current = next;
 		}
 
@@ -204,7 +223,7 @@ public class Trace extends AdjacencyListGraph implements PropertyKeys {
 
 		if (ms != 0 && roundTime) {
 			if (ms > 500)
-				c.set(Calendar.SECOND, c.get(Calendar.SECOND + 1));
+				c.set(Calendar.SECOND, c.get(Calendar.SECOND) + 1);
 
 			c.set(Calendar.MILLISECOND, 0);
 		}

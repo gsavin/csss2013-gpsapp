@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Properties;
 
@@ -51,10 +52,6 @@ public class SettingsWizard extends JPanel {
 			System.err.printf("Wizard should be launched in swing thread !\n");
 
 		SettingsWizard wizard = new SettingsWizard(app);
-
-		if (app.getSettings() != null)
-			wizard.loadSettings(app.getSettings());
-
 		wizard.dialog.setVisible(true);
 	}
 
@@ -64,7 +61,6 @@ public class SettingsWizard extends JPanel {
 	App app;
 	HashSet<String> viewTypes;
 	HashSet<String> processTypes;
-	Properties properties;
 	JPanel checkboxesView, checkboxesProcess;
 
 	public SettingsWizard(App app) {
@@ -74,7 +70,6 @@ public class SettingsWizard extends JPanel {
 		this.viewTypes = new HashSet<String>();
 		this.processTypes = new HashSet<String>();
 		this.palette = new Palette();
-		this.properties = null;
 
 		JTable entries = new JTable(model);
 
@@ -142,6 +137,8 @@ public class SettingsWizard extends JPanel {
 		dialog.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		dialog.add(this, BorderLayout.CENTER);
 		dialog.pack();
+
+		loadSettings();
 	}
 
 	protected void loadViewsCheckboxes() {
@@ -182,78 +179,24 @@ public class SettingsWizard extends JPanel {
 		dialog.pack();
 	}
 
-	protected void loadSettings(String settingsPath) {
-		Properties settings = null;
+	protected void loadSettings() {
+		Properties settings = app.getProperties();
 
-		try {
-			settings = App.loadProperties(settingsPath);
-		} catch (FileNotFoundException e) {
-			App.error(e);
-			return;
-		}
-
-		String proc = settings.getProperty("settings.process");
 		processTypes.clear();
-
-		if (proc != null) {
-			String[] process = proc.split("\\s*,\\s*");
-
-			for (String p : process) {
-				String tryClass = settings.getProperty(String.format(
-						"settings.process.%s.class", p));
-
-				if (tryClass != null) {
-					try {
-						@SuppressWarnings("unchecked")
-						Class<? extends Process> pClass = (Class<? extends Process>) Class
-								.forName(tryClass);
-
-						App.registerProcess(p, pClass);
-					} catch (ClassNotFoundException e) {
-						App.error(e);
-					}
-				}
-
-				processTypes.add(p);
-			}
-		} else
-			processTypes.addAll(App.getDefaultProcessName());
-
+		processTypes.addAll(app.process);
 		loadProcessCheckboxes();
 
-		String vs = settings.getProperty("settings.views");
 		viewTypes.clear();
-
-		if (vs != null) {
-			String[] views = vs.split("\\s*,\\s*");
-
-			for (String v : views) {
-				String tryClass = settings.getProperty(String.format(
-						"settings.views.%s.class", v));
-
-				if (tryClass != null) {
-					try {
-						@SuppressWarnings("unchecked")
-						Class<? extends TraceView> pClass = (Class<? extends TraceView>) Class
-								.forName(tryClass);
-
-						App.registerView(v, pClass);
-					} catch (ClassNotFoundException e) {
-						App.error(e);
-					}
-				}
-
-				viewTypes.add(v);
-			}
-		} else
-			viewTypes.addAll(App.getDefaultViewName());
-
+		viewTypes.addAll(app.views);
 		loadViewsCheckboxes();
 
 		String[] traces = settings.getProperty("settings.traces", "").split(
 				"\\s*,\\s*");
 
 		for (String trace : traces) {
+			if (trace.length() == 0)
+				continue;
+
 			String name = settings.getProperty(String.format(
 					"settings.%s.name", trace));
 			String data = settings.getProperty(String.format(
@@ -268,7 +211,7 @@ public class SettingsWizard extends JPanel {
 				name = trace;
 
 			if (data == null) {
-				App.error("No data for trace " + name);
+				App.error("No data for trace '" + name + "'");
 				continue;
 			}
 
@@ -277,8 +220,6 @@ public class SettingsWizard extends JPanel {
 
 			model.addEntry(name, path, theColor, style);
 		}
-
-		properties = settings;
 	}
 
 	class AddTraceAction extends AbstractAction {
@@ -311,7 +252,12 @@ public class SettingsWizard extends JPanel {
 			if (prop == null)
 				return;
 
-			loadSettings(prop[0].getPath());
+			try {
+				app.loadProperties(prop[0].getPath());
+				loadSettings();
+			} catch (FileNotFoundException e) {
+				App.error(e);
+			}
 		}
 	}
 
@@ -328,10 +274,29 @@ public class SettingsWizard extends JPanel {
 				return;
 			}
 
-			Settings settings = model.getSettings();
+			String process = join(processTypes, ",");
+			String views = join(viewTypes, ",");
+
+			Properties prop = app.getProperties();
+			prop.setProperty("settings.process", process);
+			prop.setProperty("settings.views", views);
+			model.pushTraces(prop);
+
 			dialog.setVisible(false);
-			app.wizardCompleted(settings);
+			app.runApp();
 		}
+	}
+
+	protected String join(Collection<String> strings, String sep) {
+		StringBuilder buffer = new StringBuilder();
+		String theSep = "";
+
+		for (String s : strings) {
+			buffer.append(theSep).append(s);
+			theSep = sep;
+		}
+
+		return buffer.toString();
 	}
 
 	class CancelAction extends AbstractAction {
@@ -486,13 +451,8 @@ public class SettingsWizard extends JPanel {
 			fireTableCellUpdated(row, col);
 		}
 
-		public Settings getSettings() {
-			Settings settings = new Settings();
-			settings.setViews(viewTypes);
-			settings.setProcess(processTypes);
-
-			if (properties != null)
-				settings.setProperties(properties);
+		public void pushTraces(Properties prop) {
+			String traces = "";
 
 			for (int i = 0; i < data.length; i++) {
 				String name = (String) data[i][0];
@@ -500,14 +460,22 @@ public class SettingsWizard extends JPanel {
 				Color color = (Color) data[i][2];
 				String style = (String) data[i][3];
 
-				settings.addTrace(
-						name,
-						traceData,
+				if (i > 0)
+					traces += ",";
+
+				traces += name;
+
+				prop.setProperty("settings." + name + ".name", name);
+				prop.setProperty("settings." + name + ".data",
+						traceData.getPath());
+				prop.setProperty("settings." + name + ".style", style);
+				prop.setProperty(
+						"settings." + name + ".color",
 						String.format("#%02X%02X%02X", color.getRed(),
-								color.getGreen(), color.getBlue()), style);
+								color.getGreen(), color.getBlue()));
 			}
 
-			return settings;
+			prop.setProperty("settings.traces", traces);
 		}
 	}
 

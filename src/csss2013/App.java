@@ -7,6 +7,7 @@
 package csss2013;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -39,6 +40,7 @@ import csss2013.annotation.Title;
 import csss2013.process.Merge;
 import csss2013.process.NormalizeXYZ;
 import csss2013.process.Reload;
+import csss2013.util.Palette;
 import csss2013.view.DynamicView;
 import csss2013.view.GoogleMapsView;
 import csss2013.view.StaticView;
@@ -161,8 +163,7 @@ public class App implements PropertyKeys, Runnable {
 			}
 	}
 
-	@SuppressWarnings("resource")
-	public static Properties loadProperties(String ressourceName)
+	public static Properties getProperties(String ressourceName)
 			throws FileNotFoundException {
 		File f = new File(ressourceName);
 		InputStream in = null;
@@ -177,7 +178,7 @@ public class App implements PropertyKeys, Runnable {
 		}
 
 		if (in != null) {
-			Properties p = loadProperties(in);
+			Properties p = getProperties(in);
 
 			try {
 				in.close();
@@ -191,7 +192,7 @@ public class App implements PropertyKeys, Runnable {
 		return null;
 	}
 
-	public static Properties loadProperties(InputStream in) {
+	public static Properties getProperties(InputStream in) {
 		Properties prop = new Properties(defaultProperties);
 
 		try {
@@ -257,50 +258,39 @@ public class App implements PropertyKeys, Runnable {
 		}
 	}
 
-	protected Trace[] traces;
+	protected final LinkedList<Trace> traces;
 	protected final LinkedList<String> views;
-	protected final LinkedList<Process> process;
+	protected final LinkedList<String> process;
 	protected final HashMap<String, Object> data;
 	protected JFrame progressDialog;
 	protected Properties properties;
-	protected String settings;
 
 	public App(String... args) {
-		this.traces = null;
-		this.process = new LinkedList<Process>();
+		this.traces = new LinkedList<Trace>();
+		this.process = new LinkedList<String>();
 		this.views = new LinkedList<String>();
 		this.data = new HashMap<String, Object>();
 		this.properties = defaultProperties;
-		this.settings = null;
+
+		this.process.addAll(getDefaultProcessName());
+		this.views.addAll(getDefaultViewName());
 
 		processArgs(args);
 	}
 
 	public void run() {
-		SettingsWizard.launch(this);
-	}
-
-	public String getSettings() {
-		return settings;
+		if (getPropertyAsBoolean(APP_WIZARD, true))
+			SettingsWizard.launch(this);
+		else
+			runApp();
 	}
 
 	public int getTraceCount() {
-		return traces == null ? 0 : traces.length;
+		return traces.size();
 	}
 
 	public Trace getTrace(int idx) {
-		return traces[idx];
-	}
-
-	/**
-	 * Add a new process. Order of process execution will be computed according
-	 * to their priority.
-	 * 
-	 * @param p
-	 *            the new process
-	 */
-	public void enableProcess(Process p) {
-		process.add(p);
+		return traces.get(idx);
 	}
 
 	public void setData(String name, Object data) {
@@ -311,12 +301,69 @@ public class App implements PropertyKeys, Runnable {
 		return this.data.get(name);
 	}
 
-	public Properties getProperties() {
-		return properties;
+	public void loadProperties(String path) throws FileNotFoundException {
+		properties = getProperties(path);
+		flushProperties();
 	}
 
-	public void setProperties(Properties prop) {
-		this.properties = prop;
+	public void flushProperties() {
+		String proc = getProperty("settings.process");
+		this.process.clear();
+
+		if (proc != null) {
+			String[] process = proc.split("\\s*,\\s*");
+
+			for (String p : process) {
+				String tryClass = getProperty(String.format(
+						"settings.process.%s.class", p));
+
+				if (tryClass != null) {
+					try {
+						@SuppressWarnings("unchecked")
+						Class<? extends Process> pClass = (Class<? extends Process>) Class
+								.forName(tryClass);
+
+						App.registerProcess(p, pClass);
+					} catch (ClassNotFoundException e) {
+						App.error(e);
+					}
+				}
+
+				this.process.add(p);
+			}
+		} else
+			this.process.addAll(App.getDefaultProcessName());
+
+		String vs = getProperty("settings.views");
+		this.views.clear();
+
+		if (vs != null) {
+			String[] views = vs.split("\\s*,\\s*");
+
+			for (String v : views) {
+				String tryClass = getProperty(String.format(
+						"settings.views.%s.class", v));
+
+				if (tryClass != null) {
+					try {
+						@SuppressWarnings("unchecked")
+						Class<? extends TraceView> pClass = (Class<? extends TraceView>) Class
+								.forName(tryClass);
+
+						App.registerView(v, pClass);
+					} catch (ClassNotFoundException e) {
+						App.error(e);
+					}
+				}
+
+				this.views.add(v);
+			}
+		} else
+			this.views.addAll(App.getDefaultViewName());
+	}
+
+	public Properties getProperties() {
+		return properties;
 	}
 
 	public String getProperty(String key) {
@@ -419,30 +466,50 @@ public class App implements PropertyKeys, Runnable {
 		return null;
 	}
 
-	void wizardCompleted(Settings settings) {
-		LinkedList<Trace> tracesList = new LinkedList<Trace>();
+	void runApp() {
+		flushProperties();
+		loadTraces();
+		launchProcess();
+	}
 
-		for (Settings.TraceEntry e : settings) {
+	protected void loadTraces() {
+		this.traces.clear();
+		String[] traces = getProperty("settings.traces", "").split("\\s*,\\s*");
+
+		Palette palette = new Palette();
+
+		for (String trace : traces) {
+			if (trace.length() == 0)
+				continue;
+
+			String name = getProperty(String.format("settings.%s.name", trace));
+			String data = getProperty(String.format("settings.%s.data", trace));
+			String color = getProperty(
+					String.format("settings.%s.color", trace),
+					palette.nextColor());
+			String style = getProperty(
+					String.format("settings.%s.style", trace), "");
+
+			if (name == null)
+				name = trace;
+
+			if (data == null) {
+				App.error("No data for trace '" + name + "'");
+				continue;
+			}
+
+			File traceData = new File(data);
+
 			try {
-				Trace t = Trace.load(this, e.name, e.data);
-				t.setColor(e.color);
-				t.setCustomStyle(e.style);
+				Trace t = Trace.load(this, name, traceData);
+				t.setColor(color);
+				t.setCustomStyle(style);
 
-				tracesList.add(t);
+				this.traces.add(t);
 			} catch (IOException e1) {
 				error(e1.getMessage());
 			}
 		}
-
-		this.traces = tracesList.toArray(new Trace[0]);
-		views.addAll(settings.viewTypes);
-
-		process.clear();
-
-		for (String pname : settings.processTypes)
-			process.add(buildProcess(pname));
-
-		launchProcess();
 	}
 
 	protected void processArgs(String... args) {
@@ -451,10 +518,18 @@ public class App implements PropertyKeys, Runnable {
 
 		for (String arg : args) {
 			if (arg.matches("^--settings=.*")) {
-				settings = arg.substring(11);
+				String settings = arg.substring(11);
 
 				if (settings.charAt(0) == '"')
 					settings = settings.substring(1, settings.length() - 1);
+
+				try {
+					loadProperties(settings);
+				} catch (FileNotFoundException e) {
+					System.err.printf("Settings file \"%s\" not found\n",
+							settings);
+					System.exit(1);
+				}
 			}
 		}
 	}
@@ -524,6 +599,11 @@ public class App implements PropertyKeys, Runnable {
 
 	class ProcessWorker implements Runnable {
 		public void run() {
+			LinkedList<Process> process = new LinkedList<Process>();
+
+			for (String p : App.this.process)
+				process.add(buildProcess(p));
+
 			Collections.sort(process, new Comparator<Process>() {
 				public int compare(Process arg0, Process arg1) {
 					if (arg0.getPriority() < arg1.getPriority())

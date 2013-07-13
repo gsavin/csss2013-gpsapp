@@ -2,6 +2,7 @@ package csss2013;
 
 public interface PropertyKeys {
 	public static final String APP_TITLE = "app.title";
+	public static final String APP_WIZARD = "app.wizard";
 
 	public static final String TRACE_TIME_ROUND = "trace.time.round";
 	
