@@ -3,6 +3,8 @@ package csss2013.process;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Locale;
 
 import org.graphstream.graph.Graph;
@@ -86,17 +88,23 @@ public class OutputTXT implements PropertyKeys, Process {
 			if (g.getNodeCount() == 0)
 				return;
 
+			LinkedList<String> ids = new LinkedList<String>();
+			for (int i = 0; i < g.getNodeCount(); i++)
+				ids.add(g.getNode(i).getId());
+
+			Collections.sort(ids);
+
 			if (first) {
 				out.printf("# ");
-				for (int i = 0; i < g.getNodeCount(); i++)
-					out.printf("%-20s\t\t", g.getNode(i).getId());
+				for (int i = 0; i < ids.size(); i++)
+					out.printf("%-20s\t\t", ids.get(i));
 				out.printf("\n");
 
 				first = false;
 			}
 
-			for (int i = 0; i < g.getNodeCount(); i++) {
-				Double[] xyz = g.getNode(i).getAttribute("xyz");
+			for (int i = 0; i < ids.size(); i++) {
+				Double[] xyz = g.getNode(ids.get(i)).getAttribute("xyz");
 
 				if (i > 0)
 					out.printf("\t\t");

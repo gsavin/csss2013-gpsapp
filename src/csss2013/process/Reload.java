@@ -70,6 +70,7 @@ public class Reload implements Process, PropertyKeys {
 	double acceleration = 30;
 	String stylesheet;
 	final HashMap<Trace, EntryStack> stacks;
+	boolean align;
 
 	/**
 	 * In meters.
@@ -81,6 +82,7 @@ public class Reload implements Process, PropertyKeys {
 	public Reload() {
 		stacks = new HashMap<Trace, EntryStack>();
 		stylesheet = "node {size:15px;} node.anchor {size:1px;}";
+		align = true;
 	}
 
 	/*
@@ -212,7 +214,63 @@ public class Reload implements Process, PropertyKeys {
 		g.addAttribute("ui.quality");
 		g.addAttribute("ui.antialias");
 
-		while (hasRemaining()) {
+		boolean liveTogetherDieTogether = true;
+
+		if (align) {
+			double startDate = Double.MIN_VALUE;
+
+			for (EntryStack stack : stacks.values())
+				startDate = Math.max(startDate, stack.get(0).time);
+
+			System.out.printf("start date : %f\n", startDate);
+
+			for (EntryStack stack : stacks.values()) {
+				while (stack.current().time < startDate)
+					stack.position++;
+				System.out.printf("[%s] %d (%d)\n", stack.trace.getId(),
+						stack.current().time, stack.position);
+
+				Node traceNode = g.addNode(stack.trace.getId());
+				double[] initXYZ;
+				double lat, lon;
+
+				if (stack.position == 0 || stack.current().time == startDate) {
+					initXYZ = stack.current().traceNode.getAttribute("xyz");
+
+					lat = stack.current().traceNode.getNumber("lat");
+					lon = stack.current().traceNode.getNumber("lon");
+				} else {
+					double[] xyz1 = stack.get(stack.position - 1).traceNode
+							.getAttribute("xyz");
+					double[] xyz2 = stack.current().traceNode
+							.getAttribute("xyz");
+					double ratio = (startDate - stack.get(stack.position - 1).time)
+							/ (double) (stack.current().time - stack
+									.get(stack.position - 1).time);
+
+					lat = stack.get(stack.position - 1).traceNode
+							.getNumber("lat");
+					lon = stack.get(stack.position - 1).traceNode
+							.getNumber("lon");
+
+					lat += ratio
+							* (stack.current().traceNode.getNumber("lat") - lat);
+					lon += ratio
+							* (stack.current().traceNode.getNumber("lon") - lon);
+
+					initXYZ = new double[3];
+					initXYZ[0] = xyz1[0] + ratio * (xyz2[0] - xyz1[0]);
+					initXYZ[1] = xyz1[1] + ratio * (xyz2[1] - xyz1[1]);
+				}
+
+				traceNode.addAttribute("lat", lat);
+				traceNode.addAttribute("lon", lon);
+				traceNode.addAttribute("xyz", new double[] { initXYZ[0],
+						initXYZ[1] });
+			}
+		}
+
+		while ((!align || liveTogetherDieTogether) && hasRemaining()) {
 			EntryStack current = getNextStack();
 			long date = current.current().time;
 
@@ -220,19 +278,22 @@ public class Reload implements Process, PropertyKeys {
 			g.stepBegins((double) date);
 
 			for (EntryStack stack : stacks.values()) {
-				if (!stack.hasRemaining())
+				if (!stack.hasRemaining() || stack.current().time > date)
 					continue;
 
 				if (stack.position == stack.size() - 1
 						&& stack.current().time < date) {
 					g.removeNode(stack.trace.getId());
 					stack.position++;
+					liveTogetherDieTogether = false;
 					continue;
 				}
 
 				Node traceNode = g.getNode(stack.trace.getId());
 
 				if (traceNode == null) {
+					System.out.printf("add %s @ %d\n", stack.trace.getId(),
+							date);
 					double[] initXYZ = stack.get(0).traceNode
 							.getAttribute("xyz");
 
@@ -246,9 +307,11 @@ public class Reload implements Process, PropertyKeys {
 				double lat = stack.current().traceNode.getNumber("lat");
 				double lon = stack.current().traceNode.getNumber("lon");
 
-				if (stack.position == stack.size() - 1) {
+				if (stack.position == stack.size() - 1
+						|| stack.current().time == date) {
 					xyz[0] = xyz1[0];
 					xyz[1] = xyz1[1];
+					stack.position++;
 				} else {
 					double[] xyz2 = stack.next().traceNode.getAttribute("xyz");
 					double ratio = (date - stack.current().time)
@@ -288,7 +351,7 @@ public class Reload implements Process, PropertyKeys {
 			if (checkLinks)
 				checkLinks(g);
 
-			current.position++;
+			// current.position++;
 		}
 	}
 

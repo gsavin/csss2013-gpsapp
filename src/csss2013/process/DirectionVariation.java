@@ -33,17 +33,57 @@ public class DirectionVariation implements Process {
 			Iterator<Node> it = t.getTracePath();
 			Node current;
 			LinkedList<double[]> data = new LinkedList<double[]>();
+			double initialTime = Double.NaN;
 
 			while (it.hasNext()) {
 				current = it.next();
 
-				data.add(new double[] { Tools.getTime(current),
+				if (Double.isNaN(initialTime))
+					initialTime = Tools.getTime(current) / 1000;
+
+				data.add(new double[] {
+						Tools.getTime(current) / 1000 - initialTime,
 						getVariation(t, current, 10000) });
 			}
+
+			findOptimum(data);
 
 			app.setData(DATA_DV_SERIES + "." + t.getId(), data.toArray());
 			app.setData(DATA_DV_SERIES + "." + t.getId() + ".title", t.getId());
 		}
+	}
+
+	protected double[] findOptimum(LinkedList<double[]> data) {
+		LinkedList<Double> optimum = new LinkedList<Double>();
+		double threhold = 0.10;
+
+		for (int i = 2; i < data.size() - 2; i++) {
+			double[] e = data.get(i);
+			double d = (e[1] / 360) * (e[1] / 360);
+
+			if (d < threhold)
+				continue;
+
+			double d0 = data.get(i - 2)[1] / 360.0;
+			d0 = d0 * d0;
+			double d1 = data.get(i - 1)[1] / 360.0;
+			d1 = d1 * d1;
+			double d2 = data.get(i + 1)[1] / 360.0;
+			d2 = d2 * d2;
+			double d3 = data.get(i + 2)[1] / 360.0;
+			d3 = d3 * d3;
+
+			if (d0 < d && d1 < d && d2 < d && d3 < d) {
+				System.out.printf("Optimum @ %f\n", e[0]);
+				optimum.add(e[0]);
+			}
+		}
+
+		double[] r = new double[optimum.size()];
+		for (int i = 0; i < optimum.size(); i++)
+			r[i] = optimum.get(i);
+
+		return r;
 	}
 
 	protected double getVariation(Trace t, Node n, double delta) {
