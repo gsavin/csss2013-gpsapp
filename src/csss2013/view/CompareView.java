@@ -20,7 +20,6 @@ public class CompareView extends PlotView.PlotSeriesView implements TraceView {
 
 		this.xAxisLabel = "Time (seconds)";
 		this.yAxisLabel = "Distance (meters)";
-		this.showLegend = false;
 	}
 
 	public JComponent build(App app) {

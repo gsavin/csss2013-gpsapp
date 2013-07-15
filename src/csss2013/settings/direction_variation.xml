@@ -3,7 +3,7 @@
 <properties version="1.0">
 	<entry key="app.wizard">false</entry>
 	
-	<entry key="settings.traces">team1,team2,team3,team4,team5,team6,team7</entry>
+	<entry key="settings.traces">team1</entry>
 	<!-- <entry key="settings.traces">team1,team2,team3,team4,team5,team6,team7</entry>-->
 	<entry key="settings.process">normalize,dv</entry>
 	<entry key="settings.views">dv</entry>

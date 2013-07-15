@@ -8,6 +8,10 @@
 	<entry key="settings.views"></entry>
 
 	<entry key="settings.process.output_dgs.class">csss2013.process.OutputDGS</entry>
+	<entry key="process.output_dgs.path">export/output.dgs</entry>
+	
+	<entry key="process.reload.min_distance">45</entry>
+	<entry key="process.reload.checklinks">true</entry>
 	
 	<entry key="settings.team1.name">Team 1</entry>
 	<entry key="settings.team1.data">Tracks/Team1_A.gpx</entry>
@@ -29,6 +33,4 @@
 	
 	<entry key="settings.team7.name">Team 7</entry>
 	<entry key="settings.team7.data">Tracks/Team7_A.gpx</entry>
-	
-	<entry key="process.output_dgs.path">export/output.dgs</entry>
 </properties>

@@ -55,7 +55,7 @@ public class DirectionVariation implements Process {
 
 	protected double[] findOptimum(LinkedList<double[]> data) {
 		LinkedList<Double> optimum = new LinkedList<Double>();
-		double threhold = 0.10;
+		double threhold = 0.15;
 
 		for (int i = 2; i < data.size() - 2; i++) {
 			double[] e = data.get(i);
