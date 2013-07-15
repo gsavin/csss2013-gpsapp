@@ -1,7 +1,6 @@
 package csss2013.util;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.AdjacencyListGraph;
@@ -11,6 +10,7 @@ import org.graphstream.ui.swingViewer.Viewer;
 
 public class AnalyzeTraces extends SinkAdapter {
 	public static final String TRACES_DGS = "export/output.dgs";
+	public static boolean SET_VIEWPORT = false;
 
 	boolean viewportSet = false;
 	FileSourceDGS dgs;
@@ -50,15 +50,15 @@ public class AnalyzeTraces extends SinkAdapter {
 		try {
 			next = dgs.nextStep();
 
-			if (false && !viewportSet && g.hasAttribute("ui.viewport")) {
+			if (SET_VIEWPORT && !viewportSet && g.hasAttribute("ui.viewport")) {
 				Object[] anchor = g.getAttribute("ui.viewport");
-				
+
 				v.getDefaultView()
 						.getCamera()
 						.setGraphViewport((Double) anchor[0],
 								(Double) anchor[1], (Double) anchor[2],
 								(Double) anchor[3]);
-				
+
 				viewportSet = true;
 			}
 		} catch (IOException e) {
